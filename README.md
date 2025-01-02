@@ -1,4 +1,4 @@
-# DocIngest
+# DocsIngest
 
 Turn any document directory into a prompt-friendly text ingest for LLMs, with a focus on compliance and comprehensive context generation.
 
