@@ -14,7 +14,7 @@ Turn any document directory into a prompt-friendly text ingest for LLMs, with a 
 - **Compliance-Focused Ingestion**
   - Pre-configured Compliance Officer prompt
   - Customizable AI agent context
-  - Designed for education technology compliance scenarios
+  - Designed for compliance in mind
 
 - **Smart File Processing**
   - Skips system and configuration files
