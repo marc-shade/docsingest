@@ -31,13 +31,22 @@ Turn any document directory into a prompt-friendly text ingest for LLMs, with a 
 
 ## 📦 Installation
 
-```bash
-# Install from PyPI (coming soon)
-pip install docsingest
+### Using pip
 
-# Or install from source
+```bash
+pip install docsingest
+```
+
+### From Source
+
+```bash
+# Clone the repository
 git clone https://github.com/marc-shade/docsingest.git
+
+# Navigate to the directory
 cd docsingest
+
+# Install the package
 pip install -e .
 ```
 
@@ -114,11 +123,7 @@ pytest tests/
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
 ## 📄 License
 
