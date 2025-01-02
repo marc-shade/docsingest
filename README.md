@@ -3,7 +3,7 @@
 Turn any document directory into a prompt-friendly text ingest for LLMs, with a focus on compliance and comprehensive context generation.
 
 ## 🚀 Features
-
+<img src="https://github.com/user-attachments/assets/1d4ff08f-f9ca-4cf8-8164-5bfb2dacaa7e" align="right" style="width:300px;" />
 - **Multi-Format Document Support**
   - Ingests PDF, DOCX, Markdown, TXT files
   - Automatic encoding detection
