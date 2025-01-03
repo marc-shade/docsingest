@@ -97,12 +97,69 @@ summary, tree, content = ingest(
 - IDE configuration directories
 - Python cache and virtual environment files
 
-## 🔍 Compliance Context Generation
+## 🔍 Regulatory Compliance Framework
 
-The tool provides a comprehensive compliance-focused context, including:
-- Regulatory compliance overview
-- Workflow for analysis and risk assessment
-- Proactive monitoring recommendations
+DocsIngest provides a robust, multi-layered approach to regulatory compliance and document risk management:
+
+### 🛡️ Comprehensive Compliance Features
+
+#### Regulatory Compliance Overview
+- **Multi-Jurisdiction Support**: Designed to handle compliance requirements across various regulatory landscapes
+- **Adaptive Compliance Scanning**: Intelligent detection of sensitive information and potential regulatory risks
+- **Configurable Compliance Profiles**: Customizable settings for different industry standards and regulations
+
+#### Risk Assessment Workflow
+1. **Document Ingestion Analysis**
+   - Automatic classification of document types
+   - Identification of sensitive and regulated content
+   - Contextual risk scoring
+
+2. **Compliance Risk Evaluation**
+   - Detect potential regulatory violations
+   - Flag documents with high-risk content
+   - Generate detailed compliance reports
+
+3. **Proactive Monitoring**
+   - Continuous document scanning
+   - Real-time alerts for compliance breaches
+   - Audit trail generation
+
+### 🔒 Supported Compliance Domains
+- GDPR (General Data Protection Regulation)
+- HIPAA (Health Insurance Portability and Accountability Act)
+- CCPA (California Consumer Privacy Act)
+- SOX (Sarbanes-Oxley Act)
+- PCI DSS (Payment Card Industry Data Security Standard)
+- NIST Framework
+- ISO 27001 Information Security Management
+
+### 🚨 Key Compliance Capabilities
+- **Advanced PII Detection**
+  - Identify sensitive personal information
+  - Support for multiple PII categories:
+    * Names
+    * Email addresses
+    * Phone numbers
+    * Social Security Numbers
+    * Credit card numbers
+- **Intelligent Redaction**
+  - Automatic masking of sensitive information
+  - Configurable redaction levels
+- **Comprehensive Compliance Reporting**
+  - Detailed risk assessment
+  - Actionable compliance recommendations
+- **Multi-Regulation Support**
+  - Compliance checks for GDPR, FERPA, COPPA
+  - Proactive regulatory alignment
+
+### 🔍 Compliance Verification Process
+1. Document Ingestion
+2. Automated PII Scanning
+3. Risk Assessment and Scoring
+4. Compliance Reporting
+5. Optional Redaction
+
+**Note**: While DocsIngest provides powerful compliance tools, it is not a substitute for professional legal or compliance advice. Always consult with compliance experts for your specific regulatory requirements.
 
 ## 🔧 Development
 

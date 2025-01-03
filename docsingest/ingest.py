@@ -3,6 +3,7 @@ import chardet
 import markdown
 import tiktoken
 import PyPDF2
+from .pii_detector import PIIDetector, analyze_document_compliance
 import docx
 
 
@@ -126,7 +127,7 @@ The company handles sensitive client data through cloud platforms such as Citrix
 """
 
 
-def ingest(directory_path, agent_prompt=None, output_file=None):
+def ingest(directory_path, agent_prompt=None, output_file=None, pii_analysis=True):
     """
     Ingest all documents in a directory and generate a comprehensive markdown file.
     
@@ -134,9 +135,10 @@ def ingest(directory_path, agent_prompt=None, output_file=None):
         directory_path (str): Path to the directory containing documents
         agent_prompt (str, optional): Initial AI agent prompt. 
         output_file (str, optional): Path to save the output markdown file
+        pii_analysis (bool, optional): Enable PII detection and compliance analysis
     
     Returns:
-        tuple: (summary_stats, directory_tree, document_content)
+        tuple: (summary_stats, directory_tree, document_content, pii_reports)
     """
     # Use the default Compliance Officer prompt if no prompt is provided
     if agent_prompt is None:
@@ -145,6 +147,9 @@ def ingest(directory_path, agent_prompt=None, output_file=None):
     all_content = []
     total_files = 0
     total_tokens = 0
+    pii_reports = {}
+    
+    pii_detector = PIIDetector() if pii_analysis else None
     
     for root, _, files in os.walk(directory_path):
         for file in files:
@@ -152,6 +157,17 @@ def ingest(directory_path, agent_prompt=None, output_file=None):
             content = read_file(file_path)
             
             if content:
+                # Perform PII analysis if enabled
+                if pii_detector:
+                    try:
+                        pii_report = analyze_document_compliance(file_path)
+                        pii_reports[file] = pii_report
+                    except Exception as e:
+                        pii_reports[file] = {
+                            'error': str(e),
+                            'pii_detected': False
+                        }
+                
                 all_content.append(f"### {file}\n\n{content}\n\n")
                 total_files += 1
                 total_tokens += count_tokens(content)
@@ -163,7 +179,16 @@ def ingest(directory_path, agent_prompt=None, output_file=None):
 ## Metadata
 - **Total Files**: {total_files}
 - **Total Tokens**: {total_tokens}
+- **PII Analysis**: {'Enabled' if pii_analysis else 'Disabled'}
 """
+    
+    # Aggregate PII analysis results
+    if pii_reports:
+        summary_stats += "\n## PII Analysis Summary\n"
+        for filename, report in pii_reports.items():
+            summary_stats += f"### {filename}\n"
+            summary_stats += f"- PII Detected: {'Yes' if report.get('pii_detected', False) else 'No'}\n"
+            summary_stats += f"- Risk Score: {report.get('risk_score', 'N/A')}\n"
     
     full_content = f"""# AI Agent Context
 
@@ -183,4 +208,4 @@ def ingest(directory_path, agent_prompt=None, output_file=None):
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(full_content)
     
-    return summary_stats, directory_tree, full_content
+    return summary_stats, directory_tree, full_content, pii_reports
