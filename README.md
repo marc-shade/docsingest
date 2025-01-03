@@ -108,7 +108,7 @@ The tool provides a comprehensive compliance-focused context, including:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/docsingest.git
+git clone https://github.com/marc-shade/docsingest.git
 cd docsingest
 
 # Create virtual environment
