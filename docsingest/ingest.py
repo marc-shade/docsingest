@@ -1,211 +1,108 @@
+import logging
 import os
-import chardet
-import markdown
-import tiktoken
-import PyPDF2
-from .pii_detector import PIIDetector, analyze_document_compliance
-import docx
+from typing import Dict, Optional, Tuple
 
+from .pii_detector import PIIDetector
+from .tree_generator import generate_document_tree
 
-def detect_encoding(file_path):
-    """Detect the encoding of a file."""
-    with open(file_path, "rb") as file:
-        raw_data = file.read()
-        result = chardet.detect(raw_data)
-    return result["encoding"]
-
-
-def should_skip_file(file_path):
-    """
-    Determine if a file should be skipped during ingestion.
-
-    Args:
-        file_path (str): Path to the file
-
-    Returns:
-        bool: True if file should be skipped, False otherwise
-    """
-    # List of file patterns to skip
-    skip_patterns = [
-        ".DS_Store",  # macOS system file
-        "~$",  # Temporary Office files
-        ".tmp",  # Temporary files
-        ".log",  # Log files
-        ".gitignore",  # Git ignore file
-        ".git",  # Git directory
-        "__MACOSX",  # macOS resource fork directory
-        ".idea",  # IntelliJ IDEA directory
-        ".vscode",  # VS Code directory
-        ".venv",  # Python virtual environment
-        "node_modules",  # Node.js dependencies
-        ".pytest_cache",  # Pytest cache
-        "__pycache__",  # Python cache
-    ]
-
-    filename = os.path.basename(file_path)
-
-    # Check if filename matches any skip patterns
-    return any(pattern in filename or pattern in file_path for pattern in skip_patterns)
-
-
-def read_file(file_path):
-    """Read file content based on its type."""
-    # Skip configuration and system files
-    if should_skip_file(file_path):
-        return ""
-
-    file_ext = os.path.splitext(file_path)[1].lower()
-
-    try:
-        encoding = detect_encoding(file_path)
-
-        if file_ext == ".pdf":
-            with open(file_path, "rb") as file:
-                reader = PyPDF2.PdfReader(file)
-                return " ".join(page.extract_text() for page in reader.pages)
-
-        elif file_ext == ".docx":
-            doc = docx.Document(file_path)
-            return " ".join(para.text for para in doc.paragraphs)
-
-        elif file_ext == ".md":
-            with open(file_path, "r", encoding=encoding) as file:
-                return markdown.markdown(file.read())
-
-        elif file_ext in [".txt", ".csv", ".json", ".xml"]:
-            with open(file_path, "r", encoding=encoding) as file:
-                return file.read()
-
-        else:
-            return ""  # Skip unsupported file types
-
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-        return ""
-
-
-def count_tokens(text):
-    """Count tokens using tiktoken."""
-    encoding = tiktoken.get_encoding("cl100k_base")
-    return len(encoding.encode(text))
-
-
-def generate_directory_tree(root_path):
-    """Generate a markdown representation of the directory structure."""
-    tree = []
-    for root, dirs, files in os.walk(root_path):
-        # Remove skipped directories
-        dirs[:] = [d for d in dirs if not should_skip_file(os.path.join(root, d))]
-
-        level = root.replace(root_path, "").count(os.sep)
-        indent = " " * 4 * level
-        tree.append(f"{indent}- {os.path.basename(root)}/")
-        subindent = " " * 4 * (level + 1)
-        for file in files:
-            file_path = os.path.join(root, file)
-            if not should_skip_file(file_path):
-                tree.append(f"{subindent}- {file}")
-    return "\n".join(tree)
-
-
-DEFAULT_COMPLIANCE_PROMPT = """You are a compliance expert AI agent, specializing in advising companies. Your primary task is to guide the user in achieving and maintaining compliance with all applicable regulations, including FERPA, COPPA, GDPR, state data privacy laws, ADA, and Title IX. You must provide clear, actionable recommendations, assess compliance risks, and offer proactive updates based on changes in relevant regulations.
-
-### Context ###
-The company handles sensitive client data through cloud platforms such as Citrix ShareFile and uses security measures like SSO and MFA. Compliance with laws like (FERPA, COPPA) and data privacy standards (GDPR, state laws) is crucial for their operations. Your advice should be aligned with their specific business model.
-
-### Agent Workflow ###
-1. **Research and Analysis**: Start by researching the latest regulations related to the query.
-2. **Chain-of-Thought (CoT)**: Break down compliance queries into manageable subtasks.
-3. **Reflection**: Before finalizing your response, check for accuracy and relevance.
-4. **Strategic Chain-of-Thought (SCoT)**: Identify the most effective compliance strategies.
-5. **Proactive Updates**: Stay updated on changes in relevant laws.
-
-### Final Notes ###
-- Ensure recommendations are tailored to company's business model
-- Proactively identify compliance risks
-- Maintain an up-to-date understanding of the regulatory landscape
+# Default compliance-focused prompt
+DEFAULT_COMPLIANCE_PROMPT = """
+You are a compliance and risk management AI assistant.
+Your task is to:
+1. Analyze documents for sensitive information
+2. Identify potential compliance risks
+3. Provide actionable recommendations
+4. Ensure data privacy and protection standards are met
 """
 
 
-def ingest(directory_path, agent_prompt=None, output_file=None, pii_analysis=True):
+def ingest(
+    directory: str,
+    agent_prompt: str = DEFAULT_COMPLIANCE_PROMPT,
+    output_file: Optional[str] = None,
+    pii_analysis: bool = True,
+) -> Tuple[str, str, Dict, Dict]:
     """
-    Ingest all documents in a directory and generate a comprehensive markdown file.
-    
+    Ingest and analyze documents from a given directory.
+
     Args:
-        directory_path (str): Path to the directory containing documents
-        agent_prompt (str, optional): Initial AI agent prompt. 
-        output_file (str, optional): Path to save the output markdown file
-        pii_analysis (bool, optional): Enable PII detection and compliance analysis
-    
+        directory: Path to the directory containing documents
+        agent_prompt: Initial prompt for compliance analysis
+        output_file: Optional path to save the output
+        pii_analysis: Enable/disable PII detection
+
     Returns:
-        tuple: (summary_stats, directory_tree, document_content, pii_reports)
+        Tuple of (summary, document_tree, document_contents, pii_reports)
     """
-    # Use the default Compliance Officer prompt if no prompt is provided
-    if agent_prompt is None:
-        agent_prompt = DEFAULT_COMPLIANCE_PROMPT
-    
-    all_content = []
-    total_files = 0
+    # Initialize logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    # Validate input directory
+    if not os.path.isdir(directory):
+        raise ValueError(f"Invalid directory: {directory}")
+
+    # Track document processing
+    document_contents: Dict = {}
+    pii_reports: Dict = {}
     total_tokens = 0
-    pii_reports = {}
-    
+    processed_files = 0
+
+    # Optional PII Detector
     pii_detector = PIIDetector() if pii_analysis else None
-    
-    for root, _, files in os.walk(directory_path):
-        for file in files:
-            file_path = os.path.join(root, file)
-            content = read_file(file_path)
-            
-            if content:
-                # Perform PII analysis if enabled
+
+    # Process documents
+    for root, _, files in os.walk(directory):
+        for filename in files:
+            filepath = os.path.join(root, filename)
+
+            # Skip non-text files
+            if not filename.lower().endswith((".txt", ".md", ".log", ".csv")):
+                continue
+
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    content = f.read()
+
+                # Perform PII detection if enabled
+                pii_report = None
                 if pii_detector:
-                    try:
-                        pii_report = analyze_document_compliance(file_path)
-                        pii_reports[file] = pii_report
-                    except Exception as e:
-                        pii_reports[file] = {
-                            'error': str(e),
-                            'pii_detected': False
-                        }
-                
-                all_content.append(f"### {file}\n\n{content}\n\n")
-                total_files += 1
-                total_tokens += count_tokens(content)
-    
-    directory_tree = generate_directory_tree(directory_path)
-    
-    summary_stats = f"""# Document Ingest Summary
+                    pii_report = pii_detector.detect(content)
+                    pii_reports[filename] = pii_report
+
+                # Store document content
+                document_contents[filename] = {
+                    "path": filepath,
+                    "content": content,
+                    "pii_report": pii_report,
+                }
+
+                # Update processing metrics
+                processed_files += 1
+                total_tokens += len(content.split())
+
+            except Exception as e:
+                logger.warning(f"Could not process {filename}: {e}")
+
+    # Generate document tree
+    document_tree = generate_document_tree(directory)
+
+    # Create summary
+    summary = f"""# Document Ingest Summary
 
 ## Metadata
-- **Total Files**: {total_files}
+- **Total Files**: {processed_files}
 - **Total Tokens**: {total_tokens}
-- **PII Analysis**: {'Enabled' if pii_analysis else 'Disabled'}
+
+## PII Analysis
+- **PII Detection**: {'Enabled' if pii_analysis else 'Disabled'}
+- **Files with PII**: {sum(1 for report in pii_reports.values()
+                            if report.get('pii_detected', False))}
 """
-    
-    # Aggregate PII analysis results
-    if pii_reports:
-        summary_stats += "\n## PII Analysis Summary\n"
-        for filename, report in pii_reports.items():
-            summary_stats += f"### {filename}\n"
-            summary_stats += f"- PII Detected: {'Yes' if report.get('pii_detected', False) else 'No'}\n"
-            summary_stats += f"- Risk Score: {report.get('risk_score', 'N/A')}\n"
-    
-    full_content = f"""# AI Agent Context
 
-{agent_prompt}
-
-{summary_stats}
-
-## Directory Structure
-{directory_tree}
-
-## Document Contents
-
-{''.join(all_content)}
-"""
-    
+    # Optional: Write to output file
     if output_file:
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(full_content)
-    
-    return summary_stats, directory_tree, full_content, pii_reports
+        with open(output_file, "w") as f:
+            f.write(summary)
+
+    return summary, document_tree, document_contents, pii_reports

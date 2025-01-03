@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='docsingest',
-    version='0.1.0',
+    version='0.2.0',
     author='Marc Shade',
     author_email='marc@2acrestudios.com',
     description='AI-powered document ingestion tool with compliance features',
@@ -14,12 +14,14 @@ setup(
     url='https://github.com/marc-shade/docsingest',
     packages=find_packages(),
     install_requires=[
-        'PyPDF2>=3.0.1',
-        'python-docx>=0.8.11',
-        'markdown>=3.4.3',
-        'tiktoken>=0.4.0',
-        'chardet>=5.1.0',
-        'requests>=2.26.0'
+        'python-docx>=0.8.11,<2.0.0',
+        'PyPDF2>=3.0.0,<4.0.0',
+        'markdown>=3.6.0,<4.0.0',
+        'tiktoken>=0.5.0,<1.0.0',
+        'chardet>=5.1.0,<6.0.0',
+        'requests>=2.31.0,<3.0.0',
+        'spacy==3.7.4',
+        'regex>=2024.1.0,<2025.0.0'
     ],
     entry_points={
         'console_scripts': [
@@ -40,7 +42,7 @@ setup(
         'Topic :: Text Processing',
         'Topic :: Utilities'
     ],
-    keywords='document-processing ai compliance llm text-extraction',
+    keywords='document-processing ai compliance llm text-extraction pii-detection',
     python_requires='>=3.8',
     project_urls={
         'Bug Reports': 'https://github.com/marc-shade/docsingest/issues',
