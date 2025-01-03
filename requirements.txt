@@ -1,5 +1,5 @@
+python-docx>=0.8.11,<2.0.0
 PyPDF2
-python-docx
 markdown
 tiktoken
 chardet

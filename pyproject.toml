@@ -1,16 +1,22 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "docsingest"
-version = "0.1.6"
+version = "0.1.17"
 description = "AI-powered document ingestion tool with compliance features"
 readme = "README.md"
 authors = [{name = "Marc Shade", email = "marc@2acrestudios.com"}]
 license = {file = "LICENSE"}
-requires-python = ">=3.7"
-dependencies = []
+requires-python = ">=3.8"
+dependencies = [
+    "requests",
+    "chardet",
+    "tiktoken",
+    "markdown",
+    "python-docx"
+]
 
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -33,9 +39,6 @@ keywords = ["document-processing", "ai", "compliance", "llm", "text-extraction"]
 [project.optional-dependencies]
 processing = [
     "PyPDF2",
-    "python-docx",
-    "markdown",
-    "tiktoken",
     "chardet",
     "requests"
 ]
