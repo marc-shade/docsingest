@@ -1,43 +1,55 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "docsingest"
-version = "0.1.0"
+version = "0.1.6"
 description = "AI-powered document ingestion tool with compliance features"
 readme = "README.md"
 authors = [{name = "Marc Shade", email = "marc@2acrestudios.com"}]
 license = {file = "LICENSE"}
+requires-python = ">=3.7"
+dependencies = []
+
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing",
     "Topic :: Utilities"
 ]
 keywords = ["document-processing", "ai", "compliance", "llm", "text-extraction"]
-requires-python = ">=3.8"
-dependencies = [
-    "PyPDF2>=3.0.1",
-    "python-docx>=0.8.11",
-    "markdown>=3.4.3",
-    "tiktoken>=0.4.0",
-    "chardet>=5.1.0",
-    "requests>=2.26.0"
-]
 
-[project.scripts]
-docsingest = "docsingest.cli:main"
+[project.optional-dependencies]
+processing = [
+    "PyPDF2",
+    "python-docx",
+    "markdown",
+    "tiktoken",
+    "chardet",
+    "requests"
+]
+dev = [
+    "pytest",
+    "twine",
+    "build"
+]
 
 [project.urls]
 Homepage = "https://github.com/marc-shade/docsingest"
+Repository = "https://github.com/marc-shade/docsingest"
 "Bug Reports" = "https://github.com/marc-shade/docsingest/issues"
 Source = "https://github.com/marc-shade/docsingest"
+
+[project.scripts]
+docsingest = "docsingest.cli:main"
