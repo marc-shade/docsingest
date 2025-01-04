@@ -10,6 +10,7 @@ Turn any document directory into a prompt-friendly text ingest for LLMs, with a 
   - Ingests PDF, DOCX, Markdown, TXT files
   - Automatic encoding detection
   - Intelligent file type handling
+  - **NEW**: Extended support for `.xlsx`, `.xls`, `.pptx`, `.json`, `.csv`, `.xml`
 
 - **Compliance-Focused Ingestion**
   - Pre-configured Compliance Officer prompt
@@ -25,6 +26,12 @@ Turn any document directory into a prompt-friendly text ingest for LLMs, with a 
   - Generates comprehensive directory structure tree
   - Counts total files and tokens
   - Provides summary statistics
+
+- **Semantic Compression (NEW)**
+  - Intelligently reduce document size while maintaining core meaning
+  - Configurable compression levels
+  - Preserves full original content
+  - Optional compressed view for AI processing
 
 - **Flexible Usage**
   - Command-line interface
@@ -58,6 +65,12 @@ pip install -e .
 # Ingest documents with default Compliance Officer prompt
 docsingest /path/to/documents
 
+# Enable semantic compression
+docsingest /path/to/documents --compress
+
+# Custom compression level
+docsingest /path/to/documents --compress --compression-level 0.7
+
 # Custom AI agent prompt
 docsingest /path/to/documents --agent "Financial Auditor" -o financial_report.md
 ```
@@ -81,6 +94,8 @@ summary, tree, content = ingest(
 
 - PDF
 - Microsoft Word (.docx)
+- Microsoft Excel (.xlsx, .xls)
+- Microsoft PowerPoint (.pptx)
 - Markdown (.md)
 - Plain Text (.txt)
 - CSV
