@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docsingest"
-version = "0.1.18"
-description = "AI-powered document ingestion tool with compliance features"
+version = "0.1.20"
+description = "Document ingestion tool with compliance features"
 readme = "README.md"
 authors = [{name = "Marc Shade", email = "marc@2acrestudios.com"}]
 license = {file = "LICENSE"}
@@ -15,7 +15,9 @@ dependencies = [
     "chardet",
     "tiktoken",
     "markdown",
-    "python-docx"
+    "python-docx",
+    "openpyxl",
+    "PyPDF2"
 ]
 
 classifiers = [
