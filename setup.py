@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='docsingest',
-    version = "0.1.23",
+    version = "0.1.24",
     author='Marc Shade',
     author_email='marc@2acrestudios.com',
     description='Document ingestion tool with compliance features',
