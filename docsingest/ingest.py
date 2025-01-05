@@ -63,56 +63,51 @@ def ingest(
     Returns:
         Tuple of (summary, document_tree, document_contents, pii_reports)
     """
-    print(f"Starting ingest for directory: {input_directory}", file=sys.stderr)
-    print(f"PII Analysis: {pii_analysis}", file=sys.stderr)
-    print(f"Verbose mode: {verbose}", file=sys.stderr)
-    print(f"Content Compression: {'Enabled' if compress_content else 'Disabled'}", file=sys.stderr)
-    
     try:
+        # Use default compliance prompt if not specified
+        prompt = agent_prompt or DEFAULT_COMPLIANCE_PROMPT
+
         # Perform document ingestion
-        document_context = ingest_documents(input_directory, verbose, compress_content, compression_level)
-        
-        # Print diagnostic information
-        print("Diagnostic Information:", file=sys.stderr)
-        print(f"Total Files: {document_context.get('total_files', 'N/A')}", file=sys.stderr)
-        print(f"Total Tokens: {document_context.get('total_tokens', 'N/A')}", file=sys.stderr)
-        print(f"Documents Found: {len(document_context.get('documents', []))}", file=sys.stderr)
-        
-        # Generate summary for backward compatibility
-        summary = f"""# Document Ingest Summary
+        document_context = ingest_documents(
+            input_directory, 
+            verbose=verbose, 
+            compress_content=compress_content, 
+            compression_level=compression_level
+        )
 
-## Metadata
-- **Total Files**: {document_context['total_files']}
-- **Total Tokens**: {document_context['total_tokens']}
+        # Add output file to context for writing
+        document_context['output_file'] = output_file or 'document_context.md'
 
-## PII Analysis
-- **PII Detection**: {'Enabled' if pii_analysis else 'Disabled'}
-- **Files with PII**: {len(document_context['documents'])}
-"""
-
-        # Optional: Write to output file
-        if output_file:
-            with open(output_file, "w") as f:
-                f.write(summary)
-
-        # Backward compatibility: Generate document contents and PII reports
-        document_contents = {}
+        # Perform PII analysis if enabled
         pii_reports = {}
+        if pii_analysis:
+            from .pii_detector import PIIDetector
+            pii_detector = PIIDetector()
+            
+            # Analyze PII for each document
+            for directory, docs in document_context.get('document_groups', {}).items():
+                for doc in docs:
+                    content = doc.get('sanitized_content', '')
+                    pii_report = pii_detector.detect(content)
+                    if pii_report.get('pii_detected'):
+                        pii_reports[doc.get('relative_path', 'Unknown')] = pii_report
+
+        # Write document context to file
+        write_document_context(document_context)
+
+        # Generate document tree
         document_tree = generate_document_tree(input_directory)
 
-        for doc in document_context['documents']:
-            document_contents[doc['filename']] = {
-                'path': doc['full_path'],
-                'content': doc['sanitized_content'],
-                'pii_report': None  # Placeholder for future PII reporting
-            }
+        # Return comprehensive results
+        return (
+            document_context.get('summary', 'No summary available'), 
+            document_tree, 
+            document_context.get('document_groups', {}), 
+            pii_reports
+        )
 
-        write_document_context(document_context)
-        
-        return summary, document_tree, document_contents, pii_reports
-    
     except Exception as e:
-        print(f"Error during ingest: {e}", file=sys.stderr)
+        print(f"Error during document analysis: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc(file=sys.stderr)
         raise
@@ -478,6 +473,15 @@ def write_document_context(document_context):
             
             # Get document groups
             document_groups = document_context.get('document_groups', {})
+            
+            # Compute total files
+            total_files = sum(len(docs) for docs in document_groups.values())
+            
+            # Add total files to summary if not already present
+            if 'Total Files' not in summary:
+                f.write(f"## Summary\n")
+                f.write(f"- **Total Files**: {total_files}\n")
+                f.write(f"- **Total Tokens**: {document_context.get('total_tokens', 'N/A')}\n\n")
             
             # Sort directories for consistent output
             for directory, dir_docs in sorted(document_groups.items()):
