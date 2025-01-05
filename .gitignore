@@ -26,6 +26,7 @@ document_context.md
 *.context.md
 *.generated.md
 
+
 # Virtual Environment
 venv/
 .env
