@@ -1,0 +1,8 @@
+# Ignore log files
+*.log
+
+# Ignore hidden files
+.*
+
+# Ignore specific file
+sample2.md

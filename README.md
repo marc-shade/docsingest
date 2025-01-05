@@ -59,20 +59,48 @@ cd docsingest
 pip install -e .
 ```
 
-## 💡 Command Line Usage
+## 🚀 Usage
 
+### Basic Document Ingestion
 ```bash
-# Ingest documents with default Compliance Officer prompt
+# Basic usage
 docsingest /path/to/documents
 
-# Enable semantic compression
+# Output to a specific file
+docsingest /path/to/documents -o my_report.md
+
+# Verbose mode for detailed logging
+docsingest /path/to/documents -v
+```
+
+### Advanced Features
+
+#### Content Compression
+```bash
+# Enable content compression
 docsingest /path/to/documents --compress
 
-# Custom compression level
+# Specify compression level (0.0 to 1.0)
 docsingest /path/to/documents --compress --compression-level 0.7
+```
 
-# Custom AI agent prompt
-docsingest /path/to/documents --agent "Financial Auditor" -o financial_report.md
+#### Ignore Files and Directories
+Create a `.docsingest_ignore` file in your document directory to exclude specific files and directories:
+
+```bash
+# Example .docsingest_ignore
+*.log       # Ignore all log files
+.git/       # Ignore git directories
+node_modules/  # Ignore dependency directories
+```
+
+### Compliance and PII Analysis
+```bash
+# Disable PII analysis
+docsingest /path/to/documents --no-pii-analysis
+
+# Custom analysis prompt
+docsingest /path/to/documents -p "Analyze these documents for project research"
 ```
 
 ## 🐛 Python Package Usage
