@@ -21,24 +21,53 @@ wheels/
 *.egg
 MANIFEST
 
+# Sensitive Files and Secrets
+*.env
+.env
+*.secret
+*.key
+*.pem
+*.credentials
+*.token
+*secret*
+*key*
+*credentials*
+*token*
+
+# Sensitive Configuration Files
+config.ini
+*.config
+secrets.yaml
+secrets.yml
+
+# Sensitive Python Files
+bump_version.py
+
+# Temporary and Backup Files
+*.bak
+*.swp
+*.swo
+*~
+
+# Logs and Databases
+*.log
+*.sqlite
+*.db
+
+# Virtual Environment
+venv/
+.venv/
+env/
+.env/
+
 # Project-specific
 document_context.md
 *.context.md
 *.generated.md
 
-
-# Virtual Environment
-venv/
-.env
-.venv
-env/
-ENV/
-
 # IDE
 .idea/
 .vscode/
-*.swp
-*.swo
 
 # OS
 .DS_Store
