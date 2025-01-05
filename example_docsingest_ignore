@@ -1,0 +1,32 @@
+# Ignore specific files or directories
+# Use regex patterns to match files and directories to exclude
+
+# Ignore system files
+\.DS_Store
+\.Spotlight-V100
+\.Trashes
+
+# Ignore hidden directories and files
+/\..*
+
+# Ignore specific file types
+.*\.log
+.*\.tmp
+.*\.bak
+
+# Ignore version control directories
+/\.git/
+/\.svn/
+
+# Ignore build and dependency directories
+/node_modules/
+/dist/
+/build/
+/venv/
+/\.venv/
+/env/
+/\.env/
+
+# Ignore specific file patterns
+.*_test\.py
+.*_spec\.js

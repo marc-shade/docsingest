@@ -118,7 +118,12 @@ def ingest(
         raise
 
 
-def ingest_documents(input_directory, verbose=False, compress_content=False, compression_level=0.5):
+def ingest_documents(
+    input_directory, 
+    verbose=False, 
+    compress_content=False, 
+    compression_level=0.5
+):
     """
     Core document ingestion function
     
@@ -131,117 +136,80 @@ def ingest_documents(input_directory, verbose=False, compress_content=False, com
     Returns:
         dict: Comprehensive document analysis results
     """
-    print(f"Starting ingest_documents for {input_directory}", file=sys.stderr)
-    print(f"Verbose mode: {verbose}", file=sys.stderr)
-    print(f"Content Compression: {'Enabled' if compress_content else 'Disabled'}", file=sys.stderr)
+    # Load ignore patterns
+    ignore_patterns = load_ignore_patterns(input_directory)
     
-    # Ensure input directory exists
-    if not os.path.isdir(input_directory):
-        print(f"Error: {input_directory} is not a valid directory", file=sys.stderr)
-        return {
-            'total_files': 0,
-            'total_tokens': 0,
-            'documents': []
-        }
+    # Setup logging
+    log_file = setup_logging() if verbose else None
     
-    # File type to text extraction mapping
-    text_extractors = {
-        '.docx': extract_text_from_docx,
-        '.doc': extract_text_from_docx,  # Fallback for older Word docs
-        '.pdf': extract_text_from_pdf,
-        '.xlsx': extract_text_from_xlsx,
-        '.xls': extract_text_from_xls,
-        '.pptx': extract_text_from_pptx,
-        '.ppt': extract_text_from_pptx,  # Fallback for older PowerPoint
-        '.json': extract_text_from_json,
-        '.csv': extract_text_from_csv,
-        '.xml': extract_text_from_xml,
-        '.md': extract_text_from_markdown,
-        '.txt': lambda path: open(path, 'r', encoding='utf-8', errors='replace').read()
-    }
-    
-    # List all files in the directory and subdirectories
-    all_files = []
-    for root, dirs, files in os.walk(input_directory):
-        for file in files:
-            # Skip .DS_Store and other system files
-            if file.startswith('.'):
-                continue
-            
-            full_path = os.path.join(root, file)
-            all_files.append(full_path)
-    
-    print(f"Total files found: {len(all_files)}", file=sys.stderr)
-    
-    # Process documents
-    documents = []
+    # Prepare document tracking
+    document_groups = {}
     total_tokens = 0
     
-    for file_path in all_files:
-        try:
-            # Get file extension
-            _, ext = os.path.splitext(file_path)
-            ext = ext.lower()
-            
-            # Skip certain file types
-            if ext in ['.ds_store']:
-                continue
-            
-            # Extract text based on file type
-            extractor = text_extractors.get(ext)
-            if extractor:
-                content = extractor(file_path)
-            else:
-                # Fallback for unsupported file types
-                content = f"[Unsupported file type: {file_path}]"
-            
-            # Optionally compress content
-            if compress_content:
-                content = semantic_compress_text(content, compression_level)
-            
-            # Basic document info
-            filename = os.path.basename(file_path)
+    # Walk through directory
+    for root, dirs, files in os.walk(input_directory):
+        # Apply ignore patterns
+        dirs[:] = [d for d in dirs if not any(
+            re.search(pattern, os.path.join(root, d)) 
+            for pattern in ignore_patterns
+        )]
+        files = [f for f in files if not any(
+            re.search(pattern, os.path.join(root, f)) 
+            for pattern in ignore_patterns
+        )]
+        
+        # Process files
+        for filename in files:
+            file_path = os.path.join(root, filename)
             relative_path = os.path.relpath(file_path, input_directory)
             
-            # Estimate tokens (simple approximation)
-            tokens = len(content.split())
-            total_tokens += tokens
-            
-            # Create document entry
-            doc_entry = {
-                'filename': filename,
-                'full_path': file_path,
-                'relative_path': relative_path,
-                'extension': ext,
-                'tokens': tokens,
-                'sanitized_content': content,
-                'compression_applied': compress_content
-            }
-            
-            documents.append(doc_entry)
-            
-            if verbose:
-                print(f"Processed: {relative_path} (Tokens: {tokens})", file=sys.stderr)
-        
-        except Exception as e:
-            print(f"Error processing {file_path}: {e}", file=sys.stderr)
+            try:
+                # Extract text based on file extension
+                text_extractor = _get_text_extractor(filename)
+                if text_extractor:
+                    content = text_extractor(file_path)
+                    
+                    # Optional compression
+                    if compress_content:
+                        content = semantic_compress_text(content, compression_level)
+                    
+                    # Tokenize content
+                    tokens = len(content.split())
+                    total_tokens += tokens
+                    
+                    # Group documents by directory
+                    directory = os.path.dirname(relative_path) or 'Root'
+                    if directory not in document_groups:
+                        document_groups[directory] = []
+                    
+                    document_groups[directory].append({
+                        'filename': filename,
+                        'relative_path': relative_path,
+                        'extension': os.path.splitext(filename)[1],
+                        'sanitized_content': content,
+                        'tokens': tokens,
+                        'compression_applied': compress_content
+                    })
+                    
+            except Exception as e:
+                if verbose:
+                    logging.error(f"Error processing {file_path}: {e}")
     
-    # Create document context
-    document_context = {
-        'total_files': len(documents),
+    # Prepare summary
+    summary = f"""
+## Document Ingestion Summary
+- **Total Directories**: {len(document_groups)}
+- **Total Files Processed**: {sum(len(docs) for docs in document_groups.values())}
+- **Total Tokens**: {total_tokens}
+- **Compression**: {'Enabled' if compress_content else 'Disabled'}
+"""
+    
+    return {
+        'summary': summary,
+        'document_groups': document_groups,
         'total_tokens': total_tokens,
-        'documents': documents,
-        'compression_settings': {
-            'enabled': compress_content,
-            'level': compression_level if compress_content else None
-        }
+        'log_file': log_file
     }
-    
-    print("Document context created:", file=sys.stderr)
-    print(f"Total Files: {document_context['total_files']}", file=sys.stderr)
-    print(f"Total Tokens: {document_context['total_tokens']}", file=sys.stderr)
-    
-    return document_context
 
 
 def semantic_compress_text(text: str, compression_level: float = 0.5) -> str:
@@ -432,6 +400,40 @@ def extract_text_from_markdown(file_path):
         return f"[Error extracting text from {os.path.basename(file_path)}]"
 
 
+def _get_text_extractor(filename: str):
+    """
+    Get the appropriate text extractor based on file extension.
+    
+    Args:
+        filename (str): Name of the file to extract text from
+    
+    Returns:
+        Callable or None: Text extraction function or None if no extractor found
+    """
+    ext = os.path.splitext(filename)[1].lower()
+    
+    text_extractors = {
+        '.docx': extract_text_from_docx,
+        '.doc': extract_text_from_docx,  # Fallback for older Word docs
+        '.pdf': extract_text_from_pdf,
+        '.xlsx': extract_text_from_xlsx,
+        '.xls': extract_text_from_xls,
+        '.pptx': extract_text_from_pptx,
+        '.ppt': extract_text_from_pptx,  # Fallback for older PowerPoint
+        '.json': extract_text_from_json,
+        '.csv': extract_text_from_csv,
+        '.xml': extract_text_from_xml,
+        '.md': extract_text_from_markdown,
+        '.txt': lambda path: open(path, 'r', encoding='utf-8', errors='replace').read()
+    }
+    
+    # Skip system files and hidden files
+    if filename.startswith('.'):
+        return None
+    
+    return text_extractors.get(ext)
+
+
 def setup_logging():
     """
     Set up logging configuration
@@ -462,42 +464,22 @@ def write_document_context(document_context):
     Args:
         document_context (dict): Comprehensive document analysis results
     """
-    print("Starting write_document_context", file=sys.stderr)
-    print(f"Document Context Keys: {document_context.keys()}", file=sys.stderr)
-    
     try:
-        # Use the current directory for output
-        output_path = os.path.join(os.getcwd(), 'document_context.md')
+        # Use a default output path if not specified
+        output_path = document_context.get('output_file', 'document_context.md')
         
-        with open(output_path, 'w', encoding='utf-8', errors='replace') as f:
-            # Document Summary
-            f.write("# Document Ingest Analysis\n\n")
-            f.write(f"## Summary\n")
-            f.write(f"- **Total Files**: {document_context.get('total_files', 'N/A')}\n")
-            f.write(f"- **Total Tokens**: {document_context.get('total_tokens', 'N/A')}\n")
+        with open(output_path, 'w', encoding='utf-8') as f:
+            # Write overall summary
+            f.write("# Document Ingestion Report\n\n")
             
-            # Compression Settings
-            compression_settings = document_context.get('compression_settings', {})
-            f.write(f"- **Compression**: {'Enabled' if compression_settings.get('enabled') else 'Disabled'}\n")
-            if compression_settings.get('enabled'):
-                f.write(f"  - **Compression Level**: {compression_settings.get('level', 'N/A')}\n\n")
+            # Write summary from document groups
+            summary = document_context.get('summary', '')
+            f.write(summary + "\n\n")
             
-            # Detailed Document Listing
-            f.write("## Detailed Document List\n\n")
+            # Get document groups
+            document_groups = document_context.get('document_groups', {})
             
-            # Check if documents exist
-            documents = document_context.get('documents', [])
-            print(f"Number of documents: {len(documents)}", file=sys.stderr)
-            
-            # Group documents by directory
-            document_groups = {}
-            for doc in documents:
-                directory = os.path.dirname(doc['relative_path'])
-                if directory not in document_groups:
-                    document_groups[directory] = []
-                document_groups[directory].append(doc)
-            
-            # Write grouped documents
+            # Sort directories for consistent output
             for directory, dir_docs in sorted(document_groups.items()):
                 f.write(f"### Directory: `{directory or 'Root'}`\n")
                 f.write(f"**Total Files**: {len(dir_docs)}\n\n")
@@ -563,6 +545,30 @@ def generate_document_tree(directory):
             tree.append(f"{subindent}{file}")
     
     return '\n'.join(tree)
+
+
+def load_ignore_patterns(directory: str) -> List[str]:
+    """
+    Load ignore patterns from .docsingest_ignore file.
+    
+    Args:
+        directory (str): Base directory to search for .docsingest_ignore
+    
+    Returns:
+        List[str]: List of ignore patterns
+    """
+    ignore_file = os.path.join(directory, '.docsingest_ignore')
+    ignore_patterns = []
+    
+    if os.path.exists(ignore_file):
+        with open(ignore_file, 'r') as f:
+            ignore_patterns = [
+                line.strip() 
+                for line in f 
+                if line.strip() and not line.startswith('#')
+            ]
+    
+    return ignore_patterns
 
 
 if __name__ == "__main__":

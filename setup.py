@@ -5,10 +5,10 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='docsingest',
-    version='0.2.0',
+    version='0.1.19',
     author='Marc Shade',
     author_email='marc@2acrestudios.com',
-    description='AI-powered document ingestion tool with compliance features',
+    description='Document ingestion tool with compliance features',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/marc-shade/docsingest',

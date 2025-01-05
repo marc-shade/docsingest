@@ -1,0 +1,3 @@
+This is a sample document for testing docsingest.
+It contains multiple lines of text to demonstrate the ingestion process.
+We will test compression and ignore features in this document.

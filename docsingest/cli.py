@@ -31,6 +31,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         "-v", "--verbose", action="store_true", help="Enable verbose output"
     )
 
+    # Add compression arguments
+    parser.add_argument(
+        "--compress", action="store_true", help="Enable content compression"
+    )
+    parser.add_argument(
+        "--compression-level", type=float, default=0.5,
+        help="Compression level (0.0 to 1.0, default: 0.5)"
+    )
+
     args = parser.parse_args(argv)
 
     try:
@@ -46,6 +55,9 @@ def main(argv: Optional[list[str]] = None) -> int:
             agent_prompt=agent_prompt,
             output_file=output_file,
             pii_analysis=not args.no_pii_analysis,
+            verbose=args.verbose,
+            compress_content=args.compress,
+            compression_level=args.compression_level
         )
 
         # Print summary to console
