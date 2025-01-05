@@ -1,4 +1,7 @@
-# Feature Enhancement: Compression and Ignore Support
+# Version 0.1.21: Feature Enhancement and Improvements
+
+## Version Bump
+- Incremented version from 0.1.20 to 0.1.21
 
 ## New Features
 - Added CLI arguments for content compression
@@ -34,4 +37,6 @@ docsingest /path/to/docs --compress --compression-level 0.7
 # node_modules/
 ```
 
-Resolves feature request for more flexible document ingestion and processing.
+## PyPI Release
+- Updated version in `pyproject.toml` and `setup.py`
+- Ready for PyPI distribution
