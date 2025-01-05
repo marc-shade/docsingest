@@ -94,6 +94,13 @@ Create a `.docsingest_ignore` file in your document directory to exclude specifi
 node_modules/  # Ignore dependency directories
 ```
 
+#### Ignore Pattern Features
+- Support for regex-based file and directory exclusion
+- Flexible pattern matching
+- Supports comments with `#`
+- Ignore system, hidden, and temporary files
+- Prevent processing of unnecessary directories
+
 ### Compliance and PII Analysis
 ```bash
 # Disable PII analysis
@@ -204,6 +211,18 @@ DocsIngest provides a robust, multi-layered approach to regulatory compliance an
 
 **Note**: While DocsIngest provides powerful compliance tools, it is not a substitute for professional legal or compliance advice. Always consult with compliance experts for your specific regulatory requirements.
 
+## 📋 Changelog
+
+### Version 0.1.21
+- Added `.docsingest_ignore` support for flexible file and directory exclusion
+- Implemented content compression with configurable levels
+- Enhanced compliance and PII detection capabilities
+- Improved multi-format document support
+- Added more robust error handling and logging
+
+### Previous Versions
+- See [GitHub Releases](https://github.com/marc-shade/docsingest/releases) for detailed changelog
+
 ## 🔧 Development
 
 ```bash
@@ -233,8 +252,9 @@ MIT License
 
 ## 🚀 Roadmap
 
-- [ ] Support more file types
+- [x] Support more file types
 - [ ] Enhanced token estimation
 - [ ] Web interface
 - [ ] Cloud storage integration
 - [ ] Advanced AI prompt customization
+- [ ] Support for additional specialized file formats (e.g., .rtf, .odt)
