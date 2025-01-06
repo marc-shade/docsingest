@@ -40,24 +40,37 @@ Turn any document directory into a prompt-friendly text ingest for LLMs, with a 
 
 ## 📦 Installation
 
-### Using pip
+#### Using pip
 
 ```bash
 pip install docsingest
 ```
 
-### From Source
+#### From Source
 
 ```bash
 # Clone the repository
 git clone https://github.com/marc-shade/docsingest.git
-
-# Navigate to the directory
 cd docsingest
 
-# Install the package
+# Recommended: Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install the package in editable mode
 pip install -e .
 ```
+
+#### Requirements
+- **Python Version**: 3.7 - 3.12 recommended
+- **Dependencies**: All dependencies will be automatically installed via pip
+- **System Requirements**: 
+  - Basic Python development tools
+  - pip package manager
+  - Internet connection for initial setup
 
 ## 🚀 Usage
 

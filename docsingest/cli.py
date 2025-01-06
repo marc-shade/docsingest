@@ -15,62 +15,51 @@ def main(argv: Optional[list[str]] = None) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure).
     """
-    parser = argparse.ArgumentParser(description="AI document analysis tool")
+    parser = argparse.ArgumentParser(description="Ingest documents from a directory for AI context.")
 
-    parser.add_argument("directory", help="Path to documents for analysis")
+    parser.add_argument("directory", help="Path to the directory containing documents")
 
-    parser.add_argument("-o", "--output", help="Path for output markdown")
+    parser.add_argument("-o", "--output", default="document_context.md", 
+                        help="Output markdown file path (default: document_context.md)")
 
-    parser.add_argument("-p", "--prompt", default=None, help="Custom analysis prompt")
+    parser.add_argument("--agent", default=None, 
+                        help="Initial AI agent prompt (default: Comprehensive Compliance Prompt)")
 
-    parser.add_argument(
-        "--no-pii-analysis", action="store_true", help="Disable PII detection"
-    )
-
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose output"
-    )
-
-    # Add compression arguments
-    parser.add_argument(
-        "--compress", action="store_true", help="Enable content compression"
-    )
-    parser.add_argument(
-        "--compression-level", type=float, default=0.5,
-        help="Compression level (0.0 to 1.0, default: 0.5)"
-    )
+    # Restore hidden arguments for visibility
+    parser.add_argument("-p", "--prompt", help="Alternate initial AI agent prompt")
+    parser.add_argument("--no-pii-analysis", action="store_true", help="Disable PII analysis")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument("--compress", action="store_true", help="Compress document content")
+    parser.add_argument("--compression-level", type=float, default=0.5, help="Compression level (0-1)")
 
     args = parser.parse_args(argv)
 
     try:
         # Use default compliance prompt if not specified
-        agent_prompt = args.prompt or DEFAULT_COMPLIANCE_PROMPT
-
-        # Set default output if not specified
-        output_file = args.output or "document_context.md"
+        agent_prompt = args.agent or args.prompt or DEFAULT_COMPLIANCE_PROMPT
 
         # Perform document ingestion
         summary, tree, content, pii_reports = ingest(
             args.directory,
             agent_prompt=agent_prompt,
-            output_file=output_file,
-            pii_analysis=not args.no_pii_analysis,
-            verbose=args.verbose,
-            compress_content=args.compress,
-            compression_level=args.compression_level
+            output_file=args.output,
+            pii_analysis=not args.no_pii_analysis if hasattr(args, 'no_pii_analysis') else True,
+            verbose=args.verbose if hasattr(args, 'verbose') else False,
+            compress_content=args.compress if hasattr(args, 'compress') else False,
+            compression_level=args.compression_level if hasattr(args, 'compression_level') else 0.5
         )
 
         # Print summary to console
         print(summary)
 
         # If PII analysis was performed, print detailed PII reports
-        if not args.no_pii_analysis and pii_reports:
+        if not args.no_pii_analysis if hasattr(args, 'no_pii_analysis') else True and pii_reports:
             print("\n## Detailed PII Analysis")
             for filename, report in pii_reports.items():
                 _print_pii_report(filename, report)
 
         # Indicate successful completion
-        print(f"\nDocument analysis complete. Output: {output_file}")
+        print(f"\nDocument analysis complete. Output: {args.output}")
 
         return 0
 
