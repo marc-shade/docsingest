@@ -247,6 +247,19 @@ DocsIngest provides a robust, multi-layered approach to regulatory compliance an
 
 **Note**: While DocsIngest provides powerful compliance tools, it is not a substitute for professional legal or compliance advice. Always consult with compliance experts for your specific regulatory requirements.
 
+## 📦 Version Information
+
+**Current Version**: 1.1.1
+**Last Updated**: 2025-01-06
+**Maintained by**: Marc Shade (marc@2acrestudios.com)
+
+## 🚀 Roadmap
+
+- [x] Support more file types
+- [ ] Cloud storage integration
+- [ ] Advanced AI prompt customization
+- [ ] Support for additional specialized file formats (e.g., .rtf, .odt)
+
 ## 🔧 Development
 
 ```bash
@@ -273,12 +286,3 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 ## 📄 License
 
 MIT License
-
-## 🚀 Roadmap
-
-- [x] Support more file types
-- [ ] Enhanced token estimation
-- [ ] Web interface
-- [ ] Cloud storage integration
-- [ ] Advanced AI prompt customization
-- [ ] Support for additional specialized file formats (e.g., .rtf, .odt)
