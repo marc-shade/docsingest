@@ -88,7 +88,6 @@ docsingest /path/to/documents -v
 
 ### Advanced Features
 
-
 #### Comeplete Options List
 ```bash
 usage: docsingest [-h] [-o OUTPUT] [--agent AGENT] [-p PROMPT] [--no-pii-analysis] [-v] [--compress] [--compression-level COMPRESSION_LEVEL] directory
@@ -111,6 +110,7 @@ options:
   --compression-level COMPRESSION_LEVEL
                         Compression level (0-1)
 ```
+
 #### Content Compression
 ```bash
 # Enable content compression
@@ -200,28 +200,52 @@ DocsIngest provides a robust, multi-layered approach to regulatory compliance an
    - Identification of sensitive and regulated content
    - Contextual risk scoring
 
-## 📦 Version Information
+2. **Compliance Risk Evaluation**
+   - Detect potential regulatory violations
+   - Flag documents with high-risk content
+   - Generate detailed compliance reports
 
-**Current Version**: 1.1.0
-**Last Updated**: 2025-01-06
-**Maintained by**: Marc Shade (marc@2acrestudios.com)
+3. **Proactive Monitoring**
+   - Continuous document scanning
+   - Real-time alerts for compliance breaches
+   - Audit trail generation
 
-## 🤝 Contributing
+### 🔒 Supported Compliance Domains
+- GDPR (General Data Protection Regulation)
+- HIPAA (Health Insurance Portability and Accountability Act)
+- CCPA (California Consumer Privacy Act)
+- SOX (Sarbanes-Oxley Act)
+- PCI DSS (Payment Card Industry Data Security Standard)
+- NIST Framework
+- ISO 27001 Information Security Management
 
-As the primary developer, I manage this project with a focus on continuous improvement and innovation. Contributions are welcome through collaborative discussions and iterative development.
+### 🚨 Key Compliance Capabilities
+- **Advanced PII Detection**
+  - Identify sensitive personal information
+  - Support for multiple PII categories:
+    * Names
+    * Email addresses
+    * Phone numbers
+    * Social Security Numbers
+    * Credit card numbers
+- **Intelligent Redaction**
+  - Automatic masking of sensitive information
+  - Configurable redaction levels
+- **Comprehensive Compliance Reporting**
+  - Detailed risk assessment
+  - Actionable compliance recommendations
+- **Multi-Regulation Support**
+  - Compliance checks for GDPR, FERPA, COPPA
+  - Proactive regulatory alignment
 
-## 📄 License
+### 🔍 Compliance Verification Process
+1. Document Ingestion
+2. Automated PII Scanning
+3. Risk Assessment and Scoring
+4. Compliance Reporting
+5. Optional Redaction
 
-Proprietary software. All rights reserved.
-
-## 🚀 Roadmap
-
-- [x] Support more file types
-- [ ] Enhanced token estimation
-- [ ] Web interface
-- [ ] Cloud storage integration
-- [ ] Advanced AI prompt customization
-- [ ] Support for additional specialized file formats (e.g., .rtf, .odt)
+**Note**: While DocsIngest provides powerful compliance tools, it is not a substitute for professional legal or compliance advice. Always consult with compliance experts for your specific regulatory requirements.
 
 ## 🔧 Development
 
@@ -240,3 +264,21 @@ pip install -r requirements-dev.txt
 
 # Run tests
 pytest tests/
+```
+
+## 🤝 Contributing
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📄 License
+
+MIT License
+
+## 🚀 Roadmap
+
+- [x] Support more file types
+- [ ] Enhanced token estimation
+- [ ] Web interface
+- [ ] Cloud storage integration
+- [ ] Advanced AI prompt customization
+- [ ] Support for additional specialized file formats (e.g., .rtf, .odt)
