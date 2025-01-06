@@ -5,8 +5,8 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='docsingest',
-    version = "0.1.34",
-    description='📄 AI-Powered Document Analysis Tool for Comprehensive Document Processing',
+    version = "1.1.1",
+    description='📄 Document Analysis Tool for Comprehensive Document Processing',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Marc Shade',
