@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.1] - 2025-01-06
+
+### Added
+- Improved documentation structure
+- More detailed compliance framework description
+- Enhanced development and contribution guidelines
+
+### Changed
+- Updated license to MIT
+- Reorganized README sections
+- Refined project documentation
+
 ## [1.1.0] - 2025-01-06
 
 ### Added
