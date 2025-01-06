@@ -88,7 +88,7 @@ docsingest /path/to/documents -v
 
 ### Advanced Features
 
-#### Comeplete Options List
+#### Complete Options List
 ```bash
 usage: docsingest [-h] [-o OUTPUT] [--agent AGENT] [-p PROMPT] [--no-pii-analysis] [-v] [--compress] [--compression-level COMPRESSION_LEVEL] directory
 
