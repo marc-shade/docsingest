@@ -53,12 +53,15 @@ pip install docsingest
 git clone https://github.com/marc-shade/docsingest.git
 cd docsingest
 
-# Recommended: Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+# Highly Recommended: Create and activate a virtual environment
+# You can use the provided setup script for this:
+./scripts/install_dependencies.sh
+# Or you can manually create and activate a virtual environment:
+# python3 -m venv venv
+# source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
 
 # Install dependencies
-pip install -r requirements.txt
+# pip install -r requirements.txt # not needed if using the setup script
 
 # Install the package in editable mode
 pip install -e .
@@ -66,8 +69,11 @@ pip install -e .
 
 #### Requirements
 - **Python Version**: 3.7 - 3.12 recommended
-- **Dependencies**: All dependencies will be automatically installed via pip
-- **System Requirements**: 
+- **Dependencies**:
+  - `spacy==3.6.1`
+  - `en_core_web_sm==3.6.0`
+  - All other dependencies will be automatically installed via pip
+- **System Requirements**:
   - Basic Python development tools
   - pip package manager
   - Internet connection for initial setup
