@@ -40,14 +40,6 @@ Turn any document directory into a prompt-friendly text ingest for LLMs, with a 
 
 ## 📦 Installation
 
-#### Using pip
-
-```bash
-pip install docsingest
-```
-
-#### From Source
-
 ```bash
 # Clone the repository
 git clone https://github.com/marc-shade/docsingest.git
