@@ -644,7 +644,15 @@ class DocumentSanitizer:
         if 'xl/workbook.xml' in namelist:
             try:
                 content = zf.read('xl/workbook.xml').decode('utf-8', errors='replace')
-                hidden_sheets = re.findall(r'<sheet[^>]*state="(?:hidden|veryHidden)"[^>]*name="([^"]*)"', content)
+                # Match hidden sheets regardless of attribute order (name before or after state)
+                hidden_sheets = re.findall(
+                    r'<sheet[^>]*state="(?:hidden|veryHidden)"[^>]*name="([^"]*)"', content
+                )
+                hidden_sheets += re.findall(
+                    r'<sheet[^>]*name="([^"]*)"[^>]*state="(?:hidden|veryHidden)"', content
+                )
+                # Deduplicate
+                hidden_sheets = list(dict.fromkeys(hidden_sheets))
                 if hidden_sheets:
                     findings.append(SanitizationFinding(
                         finding_type=FindingType.HIDDEN_TEXT,

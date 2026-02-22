@@ -21,32 +21,135 @@ logger = logging.getLogger(__name__)
 
 
 class CUICategory(Enum):
-    """CUI Registry categories per 32 CFR Part 2002."""
+    """CUI Registry categories per 32 CFR Part 2002 and NARA CUI Registry.
+
+    Organized by CUI Registry groupings from archives.gov/cui/registry/category-list.
+    Includes both CUI Basic and CUI Specified categories.
+    """
+    # --- Critical Infrastructure ---
     CTI = "Controlled Technical Information"
-    PRVCY = "Privacy"
-    INTEL = "Intelligence"
-    EXPT = "Export Controlled"
+    DCRIT = "Critical Infrastructure"
+    PCII = "Protected Critical Infrastructure Information"
+    CEII = "Critical Energy Infrastructure Information"
+    SSI = "Sensitive Security Information"
+
+    # --- Defense ---
     ITAR = "International Traffic in Arms Regulations"
+    EXPT = "Export Controlled"
+    SAMI = "Controlled Technical Information - Space"
+    NOFORN_DATA = "Not Releasable to Foreign Nationals Data"
+    UCNI = "Unclassified Controlled Nuclear Information"
+    NNPI = "Naval Nuclear Propulsion Information"
+    TFNI = "Transclassified Foreign Nuclear Information"
+    DoD_UCTI = "DoD Unclassified Controlled Technical Information"
+
+    # --- Export Control ---
+    EI = "Export Information"
+
+    # --- Financial ---
+    TAX = "Federal Taxpayer Information"
+    BUDGT = "Budget"
+    FTI = "Federal Tax Information"
+    BANK_SECRECY = "Bank Secrecy"
     PROPIN = "Proprietary Business Information"
+    PRIV_FIN = "Privileged Financial Information"
+    PROCUREMENT = "Source Selection Information"
+
+    # --- Immigration ---
+    IMMIG = "Immigration"
+    VISA = "Visa Information"
+
+    # --- Intelligence ---
+    INTEL = "Intelligence"
+    FISA = "Foreign Intelligence Surveillance Act"
+    HUMINT = "Human Intelligence"
+    SIGINT = "Signals Intelligence"
+    GEOINT = "Geospatial Intelligence"
+    OSINT = "Open Source Intelligence"
+    MASINT = "Measurement and Signature Intelligence"
+
+    # --- International Agreements ---
+    INTL_AGREE = "International Agreement Information"
+
+    # --- Law Enforcement ---
     LES = "Law Enforcement Sensitive"
+    LESI = "Law Enforcement Sensitive Investigation"
+    GRAND_JURY = "Grand Jury Information"
+    INFORMANT = "Confidential Informant Identity"
+    WITNESS = "Witness Protection Information"
+    SURVEIL = "Surveillance Information"
+    DEA_SENS = "DEA Sensitive Information"
+
+    # --- Legal ---
+    LEGAL = "Legal Privilege"
+    ATTY_WORK = "Attorney Work Product"
+    ATTY_CLIENT = "Attorney-Client Privilege"
+    DELIBERATIVE = "Deliberative Process"
+
+    # --- Natural & Cultural Resources ---
+    ARCH = "Archaeological Resource Information"
+    CULTURAL = "Cultural Resource Information"
+    SPECIES = "Endangered Species Information"
+
+    # --- Nuclear ---
+    OCA = "Original Classification Authority"
+    NNSA = "NNSA Information"
+    NUCLEAR = "Nuclear Security Information"
+
+    # --- Operations Security ---
+    OPSEC = "Operations Security"
+    COMSEC = "Communications Security"
+
+    # --- Patent ---
+    PATENT = "Patent Application Information"
+    INVENTION = "Invention Secrecy Act"
+
+    # --- Privacy ---
+    PRVCY = "Privacy"
+    PII = "Personally Identifiable Information"
+    HIPAA = "Health Insurance Portability and Accountability Act"
+    GENE = "Genetic Information"
+    SORN = "System of Records Notice Information"
+    EDUCATIONAL = "Student Educational Records (FERPA)"
+    SUBSTANCE = "Substance Abuse Treatment Records (42 CFR Part 2)"
+
+    # --- Provisional (Legacy) ---
     FOUO = "For Official Use Only"
     SBU = "Sensitive But Unclassified"
-    SSI = "Sensitive Security Information"
-    PCII = "Protected Critical Infrastructure Information"
+
+    # --- Public Health ---
     PHLTH = "Public Health"
-    TAX = "Federal Taxpayer Information"
-    LEGAL = "Legal Privilege"
-    OPSEC = "Operations Security"
+    SELECT_AGENT = "Select Agent and Toxin Information"
+    BSAT = "Biological Select Agents and Toxins"
+    PANDEMIC = "Pandemic Preparedness Information"
+
+    # --- Safety ---
+    SAFETY_ACT = "SAFETY Act Information"
+    CHEM = "Chemical Facility Anti-Terrorism Standards"
+
+    # --- Statistical ---
+    CENSUS = "Census"
+    CIPSEA = "CIPSEA Statistical Information"
+
+    # --- Technology & Science ---
+    SBIR = "Small Business Innovation Research"
+    STTR = "Small Business Technology Transfer"
+    RESEARCH = "Controlled Research Information"
+
+    # --- Physical & Information Security ---
     PHYS = "Physical Security"
     INFOSEC = "Information Systems Vulnerability Information"
-    BUDGT = "Budget"
-    CENSUS = "Census"
-    DCRIT = "Critical Infrastructure"
-    FISA = "Foreign Intelligence Surveillance Act"
-    GENE = "Genetic Information"
+    VULN = "Vulnerability Assessment Information"
+    PENTEST = "Penetration Testing Information"
+    INCIDENT = "Cybersecurity Incident Information"
+
+    # --- Geospatial ---
     GEO = "Geospatial"
-    PII = "Personally Identifiable Information"
-    SAMI = "Controlled Technical Information - Space"
+    GEO_PROD = "Geospatial Product Information"
+
+    # --- Transportation ---
+    SSTI = "Sensitive Surface Transportation Information"
+    RAIL = "Rail Security Information"
 
 
 class ClassificationLevel(Enum):
@@ -165,6 +268,16 @@ class CUIDetector:
         re.compile(r'\b(LES|LAW\s+ENFORCEMENT\s+SENSITIVE)\b', re.IGNORECASE): CUICategory.LES,
         re.compile(r'\b(SSI|SENSITIVE\s+SECURITY\s+INFORMATION)\b', re.IGNORECASE): CUICategory.SSI,
         re.compile(r'\b(PCII|PROTECTED\s+CRITICAL\s+INFRASTRUCTURE\s+INFORMATION)\b', re.IGNORECASE): CUICategory.PCII,
+        re.compile(r'\b(CEII|CRITICAL\s+ENERGY\s+INFRASTRUCTURE\s+INFORMATION)\b', re.IGNORECASE): CUICategory.CEII,
+        re.compile(r'\b(UCNI|UNCLASSIFIED\s+CONTROLLED\s+NUCLEAR\s+INFORMATION)\b', re.IGNORECASE): CUICategory.UCNI,
+        re.compile(r'\b(NNPI|NAVAL\s+NUCLEAR\s+PROPULSION\s+INFORMATION)\b', re.IGNORECASE): CUICategory.NNPI,
+        re.compile(r'\b(FTI|FEDERAL\s+TAX\s+INFORMATION)\b', re.IGNORECASE): CUICategory.FTI,
+        re.compile(r'\b(SBIR|SMALL\s+BUSINESS\s+INNOVATION\s+RESEARCH)\b', re.IGNORECASE): CUICategory.SBIR,
+        re.compile(r'\b(STTR|SMALL\s+BUSINESS\s+TECHNOLOGY\s+TRANSFER)\b', re.IGNORECASE): CUICategory.STTR,
+        re.compile(r'\b(COMSEC|COMMUNICATIONS\s+SECURITY)\b', re.IGNORECASE): CUICategory.COMSEC,
+        re.compile(r'\b(SAFETY\s+ACT\s+(?:PROTECTED|INFORMATION))\b', re.IGNORECASE): CUICategory.SAFETY_ACT,
+        re.compile(r'\b(CHEM[-\s]?SECURITY|CFATS|CHEMICAL\s+FACILITY\s+ANTI[-\s]?TERRORISM)\b', re.IGNORECASE): CUICategory.CHEM,
+        re.compile(r'\b(DELIBERATIVE\s+(?:PROCESS|PRIVILEGE))\b', re.IGNORECASE): CUICategory.DELIBERATIVE,
     }
 
     # Classification banner patterns

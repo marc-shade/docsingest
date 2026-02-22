@@ -6,12 +6,12 @@ Defense-grade document ingestion with CUI detection, ITAR/EAR export control scr
 
 | Framework | Standard | Coverage |
 |-----------|----------|----------|
-| CUI Program | 32 CFR Part 2002 | CUI marking detection, category validation, marking deficiency checks |
+| CUI Program | 32 CFR Part 2002 | CUI marking detection, 80+ category/subcategory validation, marking deficiency checks |
 | NIST 800-171 | SP 800-171 Rev 2 | 20+ security controls mapped (3.1.x, 3.3.x, 3.5.x, 3.8.x, 3.13.x) |
 | NIST 800-53 | SP 800-53 Rev 5 | AU, SI, AC, MP, SC control families |
 | ITAR | 22 CFR 120-130 | USML category detection (I-XXI), technical data screening |
 | EAR | 15 CFR 730-774 | ECCN pattern detection, CCL classification |
-| HIPAA | 45 CFR 160, 164 | PHI detection (MRN, health plan IDs, patient IDs, dates of service) |
+| HIPAA | 45 CFR 164.514(b)(2) | **All 18 Safe Harbor identifiers** -- full de-identification standard coverage |
 | Privacy Act | 5 USC 552a | PII detection with regulatory mapping |
 | FedRAMP | AU Family | Tamper-evident audit trail with SHA-256 hash chain, CEF export |
 | DFARS | 252.204-7012 | CUI protection requirements for defense contractors |
@@ -53,7 +53,18 @@ tests/
 
 ### CUI Detection (32 CFR Part 2002)
 - Detects CUI markings: `CUI`, `CUI//SP-xxx`, `CUI//REL TO`
-- Validates against CUI Registry categories (CTI, PRVCY, INTEL, EXPT, ITAR, etc.)
+- Validates against **80+ CUI Registry categories and subcategories** from the NARA CUI Registry, including:
+  - Critical Infrastructure: CTI, DCRIT, PCII, CEII, SSI
+  - Defense: ITAR, EXPT, SAMI, UCNI, NNPI, TFNI
+  - Intelligence: INTEL, FISA, HUMINT, SIGINT, GEOINT, OSINT, MASINT
+  - Law Enforcement: LES, LESI, GRAND_JURY, INFORMANT, WITNESS, SURVEIL
+  - Legal: LEGAL, ATTY_WORK, ATTY_CLIENT, DELIBERATIVE
+  - Privacy: PRVCY, PII, HIPAA, GENE, SORN, EDUCATIONAL, SUBSTANCE
+  - Financial: TAX, FTI, BANK_SECRECY, PROPIN, PROCUREMENT
+  - Nuclear: UCNI, NNPI, NNSA, NUCLEAR
+  - Science/Technology: SBIR, STTR, RESEARCH
+  - Security: OPSEC, COMSEC, PHYS, INFOSEC, VULN, PENTEST, INCIDENT
+- Detects 15+ legacy marking formats (FOUO, SBU, LES, SSI, PCII, CEII, UCNI, NNPI, FTI, COMSEC, etc.)
 - Detects classification banners: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP SECRET, TS//SCI
 - Detects dissemination controls: NOFORN, REL TO, ORCON, PROPIN, FISA, IMCON
 - Identifies marking deficiencies (missing banners, contradictory markings, legacy FOUO)
@@ -61,9 +72,26 @@ tests/
 - Risk scoring with NIST control mapping
 
 ### Enhanced PII/PHI Detection
-- **30+ detection categories** with confidence scoring (high/medium/low)
-- Standard PII: email, phone, SSN, credit card, DOB, driver's license, passport, address
-- HIPAA PHI: medical record numbers, health plan IDs, patient IDs, dates of service, diagnoses, prescriptions
+- **42+ detection categories** with confidence scoring (high/medium/low)
+- **Full HIPAA Safe Harbor coverage** -- all 18 identifier categories per 45 CFR 164.514(b)(2):
+  1. Names (via NER)
+  2. Geographic subdivisions (zip codes, addresses)
+  3. Dates (DOB, admission/discharge, death, ages >89)
+  4. Telephone numbers
+  5. Fax numbers
+  6. Email addresses
+  7. Social Security numbers
+  8. Medical record numbers
+  9. Health plan beneficiary numbers (including subscriber/group IDs)
+  10. Account numbers
+  11. Certificate/license numbers (driver's license, professional license, DEA)
+  12. Vehicle identifiers (VIN)
+  13. Device identifiers (UDI, serial numbers)
+  14. Web URLs
+  15. IP addresses
+  16. Biometric identifiers (fingerprint, voiceprint, retinal scan)
+  17. Full-face photographs (reference detection)
+  18. Other unique identifiers
 - Defense PII: DoD ID (EDIPI), CAC numbers, security clearance references, CAGE codes, DUNS numbers, SAM UEI
 - Financial PII: bank routing numbers, SWIFT/BIC codes, EIN/TIN, bank accounts, IBAN
 - Export control markers: ITAR markings, EAR markings, controlled technical data
@@ -356,6 +384,7 @@ pytest tests/ -v
 
 ## Version History
 
+- **0.2.1** -- Full HIPAA Safe Harbor coverage (all 18 identifiers), 80+ CUI Registry subcategories, regex bug fixes, 213 passing tests
 - **0.2.0** -- Defense compliance upgrade: CUI detection, enhanced PII/PHI, document sanitization, ITAR/EAR screening, FedRAMP audit trails
 - **0.1.34** -- Multi-format support, semantic compression, basic PII detection
 

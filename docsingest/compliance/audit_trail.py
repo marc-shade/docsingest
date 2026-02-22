@@ -142,7 +142,7 @@ class AuditEntry:
         ext_str = ' '.join(extensions)
 
         return (
-            f"CEF:0|docsingest|ComplianceAudit|0.2.0|"
+            f"CEF:0|docsingest|ComplianceAudit|0.2.1|"
             f"{self.event_type}|{self.action}|{cef_severity}|{ext_str}"
         )
 

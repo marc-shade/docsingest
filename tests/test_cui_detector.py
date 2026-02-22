@@ -216,6 +216,85 @@ class TestCUIDetector:
         assert "test_doc.txt" in report.summary
         assert "CUI" in report.summary
 
+    # --- Expanded CUI Registry Subcategory Tests ---
+
+    def test_detect_cui_specified_prvcy(self, detector):
+        text = "CUI//SP-PRVCY - Privacy protected information."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.PRVCY for m in report.cui_markings)
+
+    def test_detect_cui_specified_intel(self, detector):
+        text = "CUI//SP-INTEL - Intelligence community information."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.INTEL for m in report.cui_markings)
+
+    def test_detect_cui_specified_expt(self, detector):
+        text = "CUI//SP-EXPT - Export controlled technical data."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.EXPT for m in report.cui_markings)
+
+    def test_detect_ceii_legacy_marking(self, detector):
+        text = "CRITICAL ENERGY INFRASTRUCTURE INFORMATION - Do not release."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.CEII for m in report.cui_markings)
+
+    def test_detect_ucni_legacy_marking(self, detector):
+        text = "UNCLASSIFIED CONTROLLED NUCLEAR INFORMATION."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.UCNI for m in report.cui_markings)
+
+    def test_detect_nnpi_legacy_marking(self, detector):
+        text = "NAVAL NUCLEAR PROPULSION INFORMATION - Distribution limited."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.NNPI for m in report.cui_markings)
+
+    def test_detect_fti_legacy_marking(self, detector):
+        text = "FEDERAL TAX INFORMATION - IRC 6103 protected."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.FTI for m in report.cui_markings)
+
+    def test_detect_sbir_legacy_marking(self, detector):
+        text = "SMALL BUSINESS INNOVATION RESEARCH data enclosed."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.SBIR for m in report.cui_markings)
+
+    def test_detect_comsec_legacy_marking(self, detector):
+        text = "COMSEC - Communications Security procedures apply."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.COMSEC for m in report.cui_markings)
+
+    def test_detect_deliberative_process(self, detector):
+        text = "DELIBERATIVE PROCESS - Pre-decisional draft."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.DELIBERATIVE for m in report.cui_markings)
+
+    def test_detect_cfats_marking(self, detector):
+        text = "CFATS - Chemical Facility Anti-Terrorism Standards data."
+        report = detector.detect(text, filename="test.txt")
+        assert report.cui_detected is True
+        assert any(m.category == CUICategory.CHEM for m in report.cui_markings)
+
+    def test_cui_category_resolution_new_categories(self, detector):
+        """Test that new CUI categories resolve correctly from SP markings."""
+        for cat_name in ['CEII', 'UCNI', 'NNPI', 'FTI', 'COMSEC', 'SBIR', 'STTR']:
+            text = f"CUI//SP-{cat_name} - Test data."
+            report = detector.detect(text, filename="test.txt")
+            assert report.cui_detected is True, f"Failed to detect CUI//SP-{cat_name}"
+            assert any(
+                m.category is not None and m.category.name == cat_name
+                for m in report.cui_markings
+            ), f"Failed to resolve category {cat_name}"
+
     # --- No CUI Document ---
 
     def test_clean_document(self, detector):
