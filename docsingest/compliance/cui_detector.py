@@ -15,7 +15,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -443,7 +443,6 @@ class CUIDetector:
         Returns list of deficiency descriptions.
         """
         deficiencies: List[str] = []
-        lines = text.split('\n')
 
         # Check 1: CUI content without proper header banner
         if cui_markings and not any(b.position_in_document == "header" for b in banners):

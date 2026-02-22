@@ -18,15 +18,13 @@ References:
 """
 
 import hashlib
-import json
 import logging
 import os
 import re
-import struct
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, BinaryIO, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
