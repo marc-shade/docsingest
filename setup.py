@@ -5,8 +5,8 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='docsingest',
-    version = "1.1.1",
-    description='📄 Document Analysis Tool for Comprehensive Document Processing',
+    version="0.2.0",
+    description='Defense-grade document ingestion with CUI detection, ITAR/EAR screening, PII/PHI protection, and FedRAMP-ready audit trails',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Marc Shade',
@@ -30,6 +30,17 @@ setup(
         'spacy==3.7.4',
         'regex>=2024.1.0,<2025.0.0'
     ],
+    extras_require={
+        'compliance': [
+            'spacy>=3.6,<4.0',
+            'nltk>=3.5',
+        ],
+        'dev': [
+            'pytest',
+            'twine',
+            'build',
+        ],
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -40,12 +51,15 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Text Processing :: General',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Security',
         'Topic :: Utilities'
     ],
-    keywords='document-analysis ai compliance pii-detection semantic-compression llm text-extraction',
+    keywords='document-analysis ai compliance pii-detection cui nist-800-171 itar ear export-control defense fedramp audit-trail',
     python_requires='>=3.8',
     project_urls={
         'Bug Reports': 'https://github.com/marc-shade/docsingest/issues',
