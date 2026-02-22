@@ -2,7 +2,7 @@
 Enhanced PII/PHI Detection for defense-grade document analysis.
 
 Extends basic PII detection with:
-- HIPAA PHI detection (medical records, health plans, patient IDs)
+- Full HIPAA Safe Harbor coverage (all 18 identifier categories per 45 CFR 164.514(b)(2))
 - Defense-specific PII (DoD IDs, CAC numbers, clearances, CAGE/DUNS)
 - Financial PII (routing numbers, SWIFT/BIC, EIN/TIN)
 - ITAR/EAR controlled technical data markers
@@ -10,8 +10,30 @@ Extends basic PII detection with:
 - Regulatory mapping (HIPAA, FERPA, GLBA, Privacy Act, ITAR)
 - NIST 800-53 SI-4 and SI-19 control mapping
 
+HIPAA Safe Harbor De-identification Standard (45 CFR 164.514(b)(2)):
+All 18 categories of identifiers are covered:
+ 1. Names
+ 2. Geographic subdivisions smaller than state (zip codes, addresses)
+ 3. Dates related to individual (DOB, admission/discharge, death, ages >89)
+ 4. Telephone numbers
+ 5. Fax numbers
+ 6. Email addresses
+ 7. Social Security numbers
+ 8. Medical record numbers
+ 9. Health plan beneficiary numbers
+10. Account numbers
+11. Certificate/license numbers (driver's license, professional license, DEA)
+12. Vehicle identifiers and serial numbers (VIN)
+13. Device identifiers and serial numbers (UDI, serial numbers)
+14. Web URLs
+15. IP addresses
+16. Biometric identifiers (fingerprint, voiceprint, retinal scan references)
+17. Full-face photographs and comparable images (references detected)
+18. Any other unique identifying number, characteristic, or code
+
 References:
 - HIPAA Privacy Rule (45 CFR 160, 164)
+- HIPAA Safe Harbor De-identification (45 CFR 164.514(b)(2))
 - Privacy Act of 1974 (5 USC 552a)
 - ITAR (22 CFR 120-130)
 - NIST SP 800-53 Rev 5: SI-4, SI-19
@@ -28,7 +50,11 @@ logger = logging.getLogger(__name__)
 
 
 class PIICategory(Enum):
-    """Categories of PII/PHI detection."""
+    """Categories of PII/PHI detection.
+
+    Covers all 18 HIPAA Safe Harbor identifiers plus defense-specific,
+    financial, and export control categories.
+    """
     # Standard PII
     EMAIL = "Email Address"
     PHONE = "Phone Number"
@@ -40,13 +66,26 @@ class PIICategory(Enum):
     DRIVERS_LICENSE = "Driver's License Number"
     PASSPORT = "Passport Number"
 
-    # HIPAA PHI
+    # HIPAA PHI (Safe Harbor categories)
     MEDICAL_RECORD = "Medical Record Number"
     HEALTH_PLAN_ID = "Health Plan Beneficiary ID"
     PATIENT_ID = "Patient Identifier"
     DATE_OF_SERVICE = "Date of Service"
     MEDICAL_CONDITION = "Medical Condition Reference"
     PRESCRIPTION = "Prescription Information"
+    FAX_NUMBER = "Fax Number"
+    ZIP_CODE = "Geographic Subdivision (Zip Code)"
+    VEHICLE_ID = "Vehicle Identifier (VIN)"
+    DEVICE_ID = "Device Identifier (UDI/Serial)"
+    WEB_URL = "Web URL Identifier"
+    IP_ADDRESS = "IP Address"
+    BIOMETRIC_ID = "Biometric Identifier"
+    PHOTO_REFERENCE = "Photographic Image Reference"
+    PROFESSIONAL_LICENSE = "Professional License/Certificate Number"
+    DEA_NUMBER = "DEA Registration Number"
+    AGE_OVER_89 = "Age Over 89"
+    DATE_OF_DEATH = "Date of Death"
+    ADMISSION_DATE = "Admission/Discharge Date"
 
     # Defense-specific
     DOD_ID = "DoD ID Number"
@@ -148,31 +187,37 @@ class EnhancedPIIDetector:
         return checksum % 10 == 0
 
     def _build_patterns(self) -> None:
-        """Build all detection patterns with regulatory mappings."""
+        """Build all detection patterns with regulatory mappings.
+
+        Patterns cover all 18 HIPAA Safe Harbor identifiers, defense-specific PII,
+        financial PII, and export control markers.
+        """
         self.PATTERNS = {
             # --- Standard PII ---
             PIICategory.EMAIL: (
                 re.compile(r'\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b'),
                 "high",
-                [Regulation.PRIVACY_ACT, Regulation.GDPR, Regulation.CCPA],
+                [Regulation.PRIVACY_ACT, Regulation.GDPR, Regulation.CCPA, Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "Redact or encrypt email addresses. Ensure storage complies with applicable privacy regulations.",
+                "Redact or encrypt email addresses. HIPAA Safe Harbor #6. "
+                "Ensure storage complies with applicable privacy regulations.",
             ),
             PIICategory.PHONE: (
                 re.compile(
                     r'\b(?:\+?1[\s.\-]?)?\(?(?:[2-9]\d{2})\)?[\s.\-]?(?:\d{3})[\s.\-]?(?:\d{4})\b'
                 ),
                 "high",
-                [Regulation.PRIVACY_ACT, Regulation.CCPA],
+                [Regulation.PRIVACY_ACT, Regulation.CCPA, Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "Redact phone numbers from documents before distribution.",
+                "Redact phone numbers from documents before distribution. HIPAA Safe Harbor #4.",
             ),
             PIICategory.SSN: (
                 re.compile(r'\b(?!000|666|9\d{2})\d{3}[-\s]?\d{2}[-\s]?\d{4}\b'),
                 "high",
-                [Regulation.PRIVACY_ACT, Regulation.DFARS],
+                [Regulation.PRIVACY_ACT, Regulation.DFARS, Regulation.HIPAA],
                 ["SI-4", "SI-19", "MP-6"],
-                "CRITICAL: SSN detected. Immediately redact. Report per Privacy Act breach procedures. "
+                "CRITICAL: SSN detected. HIPAA Safe Harbor #7. Immediately redact. "
+                "Report per Privacy Act breach procedures. "
                 "Do not store SSNs unless operationally required per DoD 5400.11-R.",
             ),
             PIICategory.CREDIT_CARD: (
@@ -194,7 +239,8 @@ class EnhancedPIIDetector:
                 "high",
                 [Regulation.PRIVACY_ACT, Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "Date of birth is PII under the Privacy Act. Redact unless operationally necessary.",
+                "Date of birth is PII under the Privacy Act. HIPAA Safe Harbor #3. "
+                "Redact unless operationally necessary.",
             ),
             PIICategory.DRIVERS_LICENSE: (
                 re.compile(
@@ -202,9 +248,10 @@ class EnhancedPIIDetector:
                     re.IGNORECASE,
                 ),
                 "medium",
-                [Regulation.PRIVACY_ACT, Regulation.CCPA],
+                [Regulation.PRIVACY_ACT, Regulation.CCPA, Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "Driver's license number is PII. Redact before distribution.",
+                "Driver's license number is PII. HIPAA Safe Harbor #11. "
+                "Redact before distribution.",
             ),
             PIICategory.PASSPORT: (
                 re.compile(
@@ -223,12 +270,13 @@ class EnhancedPIIDetector:
                     re.IGNORECASE,
                 ),
                 "medium",
-                [Regulation.PRIVACY_ACT, Regulation.CCPA],
+                [Regulation.PRIVACY_ACT, Regulation.CCPA, Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "Physical address detected. Consider redaction for privacy compliance.",
+                "Physical address detected. HIPAA Safe Harbor #2. "
+                "Consider redaction for privacy compliance.",
             ),
 
-            # --- HIPAA PHI ---
+            # --- HIPAA PHI (Safe Harbor categories) ---
             PIICategory.MEDICAL_RECORD: (
                 re.compile(
                     r'\b(?:MRN|medical\s+record\s*(?:no|number|#)?|chart\s*(?:no|number|#)?)\s*[:\-#]?\s*[A-Z0-9]{4,15}\b',
@@ -237,18 +285,21 @@ class EnhancedPIIDetector:
                 "high",
                 [Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "HIPAA PHI: Medical record number detected. Must be protected per 45 CFR 164.502.",
+                "HIPAA PHI: Medical record number detected. Safe Harbor #8. "
+                "Must be protected per 45 CFR 164.502.",
             ),
             PIICategory.HEALTH_PLAN_ID: (
                 re.compile(
                     r'\b(?:health\s+plan\s*(?:id|number|#)?|beneficiary\s*(?:id|number|#)?|member\s*(?:id|number|#)?|'
-                    r'insurance\s*(?:id|number|#)?|policy\s*(?:no|number|#)?)\s*[:\-#]?\s*[A-Z0-9]{5,20}\b',
+                    r'insurance\s*(?:id|number|#)?|policy\s*(?:no|number|#)?|'
+                    r'subscriber\s*(?:id|number|#)?|group\s*(?:id|number|#)?)\s*[:\-#]?\s*[A-Z0-9]{5,20}\b',
                     re.IGNORECASE,
                 ),
                 "high",
                 [Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "HIPAA PHI: Health plan identifier detected. Protect per HIPAA Privacy Rule.",
+                "HIPAA PHI: Health plan identifier detected. Safe Harbor #9. "
+                "Protect per HIPAA Privacy Rule.",
             ),
             PIICategory.PATIENT_ID: (
                 re.compile(
@@ -262,25 +313,63 @@ class EnhancedPIIDetector:
             ),
             PIICategory.DATE_OF_SERVICE: (
                 re.compile(
-                    r'\b(?:date\s+of\s+service|DOS|service\s+date|admission\s+date|discharge\s+date)'
+                    r'\b(?:date\s+of\s+service|DOS|service\s+date)'
                     r'\s*[:\-]?\s*\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b',
                     re.IGNORECASE,
                 ),
                 "medium",
                 [Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "HIPAA PHI: Date of service combined with other identifiers constitutes PHI.",
+                "HIPAA PHI: Date of service combined with other identifiers constitutes PHI. "
+                "Safe Harbor #3.",
+            ),
+            PIICategory.ADMISSION_DATE: (
+                re.compile(
+                    r'\b(?:admission\s+date|discharge\s+date|admit\s+date|admitted\s+on|discharged\s+on)'
+                    r'\s*[:\-]?\s*\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Admission/discharge date detected. Safe Harbor #3. "
+                "Dates related to an individual must be removed for de-identification.",
+            ),
+            PIICategory.DATE_OF_DEATH: (
+                re.compile(
+                    r'\b(?:date\s+of\s+death|DOD|death\s+date|deceased\s+on|died\s+on)'
+                    r'\s*[:\-]?\s*\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}\b',
+                    re.IGNORECASE,
+                ),
+                "high",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Date of death detected. Safe Harbor #3. "
+                "Must be removed for de-identification.",
+            ),
+            PIICategory.AGE_OVER_89: (
+                re.compile(
+                    r'\b(?:age|aged)\s*[:\-]?\s*(?:9\d|[1-9]\d{2,})\s*(?:years?|yrs?|y/o|year\s*old)?\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Age over 89 detected. Safe Harbor #3. "
+                "Ages over 89 must be aggregated into a single category of 90+.",
             ),
             PIICategory.MEDICAL_CONDITION: (
                 re.compile(
-                    r'\b(?:diagnosis|diagnosed\s+with|condition|ICD[-\s]?(?:9|10)[-\s]?(?:CM)?)\s*[:\-]?\s*'
+                    r'\b(?:diagnosis|diagnosed\s+with|condition|ICD[-\s]?(?:9|10)[-\s]?(?:CM)?|'
+                    r'CPT\s+code|HCPCS|DRG\s+code)\s*[:\-]?\s*'
                     r'(?:[A-Z]\d{2,4}(?:\.\d{1,4})?|\w[\w\s]{3,40})\b',
                     re.IGNORECASE,
                 ),
                 "medium",
                 [Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "HIPAA PHI: Medical condition or diagnosis code detected. Protect per minimum necessary standard.",
+                "HIPAA PHI: Medical condition or diagnosis code detected. "
+                "Protect per minimum necessary standard.",
             ),
             PIICategory.PRESCRIPTION: (
                 re.compile(
@@ -292,7 +381,133 @@ class EnhancedPIIDetector:
                 "medium",
                 [Regulation.HIPAA],
                 ["SI-4", "SI-19"],
-                "HIPAA PHI: Prescription information detected. Protect per HIPAA minimum necessary.",
+                "HIPAA PHI: Prescription information detected. "
+                "Protect per HIPAA minimum necessary.",
+            ),
+            PIICategory.FAX_NUMBER: (
+                re.compile(
+                    r'\b(?:fax|facsimile)\s*(?:no|number|#)?\s*[:\-#]?\s*'
+                    r'(?:\+?1[\s.\-]?)?\(?(?:[2-9]\d{2})\)?[\s.\-]?(?:\d{3})[\s.\-]?(?:\d{4})\b',
+                    re.IGNORECASE,
+                ),
+                "high",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Fax number detected. Safe Harbor #5. "
+                "Must be removed for de-identification.",
+            ),
+            PIICategory.ZIP_CODE: (
+                re.compile(
+                    r'\b(?:zip\s*(?:code)?|postal\s*code)\s*[:\-#]?\s*\d{5}(?:[-\s]?\d{4})?\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Zip code detected. Safe Harbor #2. "
+                "Initial 3 digits must be changed to 000 if the geographic unit has <20,000 population, "
+                "or only the first 3 digits may be retained.",
+            ),
+            PIICategory.VEHICLE_ID: (
+                re.compile(
+                    r'\b(?:VIN|vehicle\s+identification\s*(?:no|number|#)?)\s*[:\-#]?\s*'
+                    r'[A-HJ-NPR-Z0-9]{17}\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA, Regulation.PRIVACY_ACT],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Vehicle identification number (VIN) detected. Safe Harbor #12. "
+                "Must be removed for de-identification.",
+            ),
+            PIICategory.DEVICE_ID: (
+                re.compile(
+                    r'\b(?:UDI|device\s+identifier|device\s+serial\s*(?:no|number|#)?|'
+                    r'serial\s*(?:no|number|#))\s*[:\-#]?\s*[A-Z0-9\-]{6,30}\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Device identifier or serial number detected. Safe Harbor #13. "
+                "Must be removed for de-identification.",
+            ),
+            PIICategory.WEB_URL: (
+                re.compile(
+                    r'\b(?:personal\s+(?:website|url|page|blog)|'
+                    r'patient\s+(?:portal\s+)?(?:url|link)|'
+                    r'(?:url|web\s*(?:site|page)?)\s*[:\-]?\s*https?://[^\s<>"\']+)\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Web URL identifier detected. Safe Harbor #14. "
+                "Personal web addresses must be removed for de-identification.",
+            ),
+            PIICategory.IP_ADDRESS: (
+                re.compile(
+                    r'\b(?:IP\s+(?:address|addr)\s*[:\-]?\s*)?'
+                    r'(?:(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d?\d)\b'
+                ),
+                "medium",
+                [Regulation.HIPAA, Regulation.PRIVACY_ACT],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: IP address detected. Safe Harbor #15. "
+                "Must be removed for de-identification.",
+            ),
+            PIICategory.BIOMETRIC_ID: (
+                re.compile(
+                    r'\b(?:fingerprint|voiceprint|retinal?\s+scan|iris\s+scan|'
+                    r'biometric\s+(?:data|identifier|template|hash|sample|record)|'
+                    r'facial\s+recognition\s+(?:data|template|identifier)|'
+                    r'palm\s+print|hand\s+geometry|gait\s+analysis)\b',
+                    re.IGNORECASE,
+                ),
+                "high",
+                [Regulation.HIPAA, Regulation.PRIVACY_ACT],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Biometric identifier reference detected. Safe Harbor #16. "
+                "Biometric data must be removed for de-identification.",
+            ),
+            PIICategory.PHOTO_REFERENCE: (
+                re.compile(
+                    r'\b(?:photograph|photo\s+(?:id|identification)|'
+                    r'facial\s+(?:photo|image|photograph)|headshot|'
+                    r'full[-\s]?face\s+(?:photo|image|photograph)|'
+                    r'patient\s+(?:photo|image|photograph))\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Photographic image reference detected. Safe Harbor #17. "
+                "Full-face photos and comparable images must be removed for de-identification.",
+            ),
+            PIICategory.PROFESSIONAL_LICENSE: (
+                re.compile(
+                    r'\b(?:(?:medical|nursing|professional|clinical)\s+license\s*(?:no|number|#)?|'
+                    r'NPI\s*(?:no|number|#)?|national\s+provider\s+identifier|'
+                    r'license\s+to\s+practice\s*(?:no|number|#)?)\s*[:\-#]?\s*[A-Z0-9]{5,15}\b',
+                    re.IGNORECASE,
+                ),
+                "medium",
+                [Regulation.HIPAA],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: Professional license/certificate number detected. Safe Harbor #11. "
+                "Must be removed for de-identification.",
+            ),
+            PIICategory.DEA_NUMBER: (
+                re.compile(
+                    r'\b(?:DEA\s*(?:no|number|#|registration)?)\s*[:\-#]?\s*'
+                    r'[A-Z][A-Z9]\d{7}\b',
+                    re.IGNORECASE,
+                ),
+                "high",
+                [Regulation.HIPAA, Regulation.PRIVACY_ACT],
+                ["SI-4", "SI-19"],
+                "HIPAA PHI: DEA registration number detected. Safe Harbor #11. "
+                "Can identify prescribing provider. Must be removed for de-identification.",
             ),
 
             # --- Defense-specific PII ---
@@ -308,7 +523,8 @@ class EnhancedPIIDetector:
             ),
             PIICategory.CAC_NUMBER: (
                 re.compile(
-                    r'\b(?:CAC|common\s+access\s+card|smart\s+card)\s*(?:no|number|#|ID)?\s*[:\-#]?\s*\d{10,16}\b',
+                    r'\b(?:CAC\s*(?:card\s*)?(?:no|number|#|ID)?|common\s+access\s+card|smart\s+card)'
+                    r'\s*(?:no|number|#|ID)?\s*[:\-#]?\s*\d{10,16}\b',
                     re.IGNORECASE,
                 ),
                 "high",
@@ -380,9 +596,10 @@ class EnhancedPIIDetector:
                     re.IGNORECASE,
                 ),
                 "high",
-                [Regulation.GLBA],
+                [Regulation.GLBA, Regulation.HIPAA],
                 ["SI-4", "SI-19", "SC-28"],
-                "Bank routing number detected. Protect per GLBA Safeguards Rule.",
+                "Bank routing number detected. HIPAA Safe Harbor #10. "
+                "Protect per GLBA Safeguards Rule.",
             ),
             PIICategory.SWIFT_BIC: (
                 re.compile(
@@ -396,7 +613,8 @@ class EnhancedPIIDetector:
             ),
             PIICategory.EIN_TIN: (
                 re.compile(
-                    r'\b(?:EIN|TIN|employer\s+identification|tax\s*(?:id|payer)\s*(?:no|number|#)?)\s*[:\-#]?\s*'
+                    r'\b(?:EIN|TIN|employer\s+identification\s*(?:no|number|#)?|'
+                    r'tax\s*(?:id|payer)\s*(?:no|number|#)?)\s*[:\-#]?\s*'
                     r'\d{2}[-\s]?\d{7}\b',
                     re.IGNORECASE,
                 ),
@@ -411,9 +629,10 @@ class EnhancedPIIDetector:
                     re.IGNORECASE,
                 ),
                 "medium",
-                [Regulation.GLBA],
+                [Regulation.GLBA, Regulation.HIPAA],
                 ["SI-4", "SI-19", "SC-28"],
-                "Bank account number detected. Protect per GLBA requirements.",
+                "Bank account number detected. HIPAA Safe Harbor #10. "
+                "Protect per GLBA requirements.",
             ),
             PIICategory.IBAN: (
                 re.compile(
@@ -593,13 +812,18 @@ class EnhancedPIIDetector:
         Shows enough to identify the type but not the full value.
         """
         if category in (PIICategory.SSN, PIICategory.CREDIT_CARD, PIICategory.BANK_ACCOUNT,
-                         PIICategory.BANK_ROUTING, PIICategory.DOD_ID, PIICategory.CAC_NUMBER):
+                         PIICategory.BANK_ROUTING, PIICategory.DOD_ID, PIICategory.CAC_NUMBER,
+                         PIICategory.DEA_NUMBER, PIICategory.VEHICLE_ID, PIICategory.DEVICE_ID):
             if len(text) > 4:
                 return text[:2] + '*' * (len(text) - 4) + text[-2:]
         elif category in (PIICategory.EMAIL,):
             parts = text.split('@')
             if len(parts) == 2 and len(parts[0]) > 2:
                 return parts[0][:2] + '***@' + parts[1]
+        elif category == PIICategory.IP_ADDRESS:
+            parts = text.split('.')
+            if len(parts) == 4:
+                return f"{parts[0]}.***.***.{parts[3]}"
         return text
 
     def _mask_context(self, context: str) -> str:
@@ -670,6 +894,20 @@ class EnhancedPIIDetector:
             PIICategory.MEDICAL_CONDITION: 12,
             PIICategory.PRESCRIPTION: 10,
             PIICategory.TECHNICAL_DATA: 15,
+            # HIPAA Safe Harbor additions
+            PIICategory.FAX_NUMBER: 8,
+            PIICategory.ZIP_CODE: 5,
+            PIICategory.VEHICLE_ID: 10,
+            PIICategory.DEVICE_ID: 8,
+            PIICategory.WEB_URL: 5,
+            PIICategory.IP_ADDRESS: 8,
+            PIICategory.BIOMETRIC_ID: 20,
+            PIICategory.PHOTO_REFERENCE: 10,
+            PIICategory.PROFESSIONAL_LICENSE: 12,
+            PIICategory.DEA_NUMBER: 15,
+            PIICategory.AGE_OVER_89: 8,
+            PIICategory.DATE_OF_DEATH: 12,
+            PIICategory.ADMISSION_DATE: 8,
         }
 
         # Confidence multipliers

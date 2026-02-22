@@ -243,11 +243,11 @@ class ExportControlScreener:
 
     # Foreign person/entity indicators
     FOREIGN_INDICATORS = [
-        re.compile(r'\b(?:foreign\s+(?:national|person|entity|government|military))\b', re.IGNORECASE),
-        re.compile(r'\b(?:non[-\s]?U\.?S\.?\s+(?:person|citizen|entity|national))\b', re.IGNORECASE),
+        re.compile(r'\b(?:foreign\s+(?:nationals?|persons?|entit(?:y|ies)|governments?|military))\b', re.IGNORECASE),
+        re.compile(r'\b(?:non[-\s]?U\.?S\.?\s+(?:persons?|citizens?|entit(?:y|ies)|nationals?))\b', re.IGNORECASE),
         re.compile(r'\b(?:deemed\s+export)\b', re.IGNORECASE),
-        re.compile(r'\b(?:foreign\s+(?:disclosure|release|transfer|sale))\b', re.IGNORECASE),
-        re.compile(r'\b(?:FMS|foreign\s+military\s+sale)\b', re.IGNORECASE),
+        re.compile(r'\b(?:foreign\s+(?:disclosure|release|transfer|sales?))\b', re.IGNORECASE),
+        re.compile(r'\b(?:FMS|foreign\s+military\s+sales?)\b', re.IGNORECASE),
         re.compile(r'\b(?:LOA|letter\s+of\s+(?:agreement|offer|acceptance))\b', re.IGNORECASE),
     ]
 

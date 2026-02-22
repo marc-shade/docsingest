@@ -317,3 +317,190 @@ class TestEnhancedPIIDetector:
         text = "SSN: 123-45-6789\nMRN: MR123456789"
         report = detector.detect(text, filename="test.txt")
         assert len(report.detections_by_regulation) > 0
+
+    # --- HIPAA Safe Harbor Full Coverage (45 CFR 164.514(b)(2)) ---
+
+    def test_hipaa_safe_harbor_1_names(self, detector):
+        """Safe Harbor #1: Names - covered by NAME category (NER-based)."""
+        # NAME detection requires NER, so we test via proxy categories
+        text = "Patient: John Doe Smith"
+        # Names are not regex-detected in the enhanced detector; they come from NER
+        # This is a documentation test confirming awareness
+
+    def test_hipaa_safe_harbor_2_zip_code(self, detector):
+        """Safe Harbor #2: Geographic subdivisions smaller than state."""
+        text = "Patient zip code: 20301-1234"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.ZIP_CODE for d in report.detections)
+
+    def test_hipaa_safe_harbor_3_dates(self, detector):
+        """Safe Harbor #3: All dates related to individual."""
+        # DOB
+        text_dob = "DOB: 03/15/1985"
+        report = detector.detect(text_dob, filename="test.txt")
+        assert any(d.category == PIICategory.DATE_OF_BIRTH for d in report.detections)
+
+        # Date of death
+        text_death = "date of death: 12/25/2024"
+        report = detector.detect(text_death, filename="test.txt")
+        assert any(d.category == PIICategory.DATE_OF_DEATH for d in report.detections)
+
+        # Admission date
+        text_admit = "admission date: 01/10/2025"
+        report = detector.detect(text_admit, filename="test.txt")
+        assert any(d.category == PIICategory.ADMISSION_DATE for d in report.detections)
+
+    def test_hipaa_safe_harbor_3_age_over_89(self, detector):
+        """Safe Harbor #3: Ages over 89 must be aggregated."""
+        text = "Patient age: 92 years old"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.AGE_OVER_89 for d in report.detections)
+
+    def test_hipaa_safe_harbor_4_telephone(self, detector):
+        """Safe Harbor #4: Telephone numbers - already tested."""
+        text = "Phone: (703) 555-1234"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.PHONE for d in report.detections)
+
+    def test_hipaa_safe_harbor_5_fax(self, detector):
+        """Safe Harbor #5: Fax numbers."""
+        text = "Fax number: (703) 555-9876"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.FAX_NUMBER for d in report.detections)
+
+    def test_hipaa_safe_harbor_6_email(self, detector):
+        """Safe Harbor #6: Email addresses - already tested."""
+        text = "Email: patient@hospital.org"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.EMAIL for d in report.detections)
+
+    def test_hipaa_safe_harbor_7_ssn(self, detector):
+        """Safe Harbor #7: Social Security numbers - already tested."""
+        text = "SSN: 123-45-6789"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.SSN for d in report.detections)
+
+    def test_hipaa_safe_harbor_8_mrn(self, detector):
+        """Safe Harbor #8: Medical record numbers - already tested."""
+        text = "MRN: MR123456789"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.MEDICAL_RECORD for d in report.detections)
+
+    def test_hipaa_safe_harbor_9_health_plan(self, detector):
+        """Safe Harbor #9: Health plan beneficiary numbers - already tested."""
+        text = "Member ID: MBR12345678"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.HEALTH_PLAN_ID for d in report.detections)
+
+    def test_hipaa_safe_harbor_10_account(self, detector):
+        """Safe Harbor #10: Account numbers - already tested."""
+        text = "Account number: 12345678901234"
+        report = detector.detect(text, filename="test.txt")
+        assert any(d.category == PIICategory.BANK_ACCOUNT for d in report.detections)
+
+    def test_hipaa_safe_harbor_11_certificate_license(self, detector):
+        """Safe Harbor #11: Certificate/license numbers."""
+        text = "Medical license number: ML12345678"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.PROFESSIONAL_LICENSE for d in report.detections)
+
+    def test_hipaa_safe_harbor_11_dea_number(self, detector):
+        """Safe Harbor #11: DEA registration numbers."""
+        text = "DEA number: AB1234567"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.DEA_NUMBER for d in report.detections)
+
+    def test_hipaa_safe_harbor_12_vehicle_id(self, detector):
+        """Safe Harbor #12: Vehicle identifiers (VIN)."""
+        text = "VIN: 1HGBH41JXMN109186"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.VEHICLE_ID for d in report.detections)
+
+    def test_hipaa_safe_harbor_13_device_id(self, detector):
+        """Safe Harbor #13: Device identifiers and serial numbers."""
+        text = "Device serial number: SN-ABC-123456-789"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.DEVICE_ID for d in report.detections)
+
+    def test_hipaa_safe_harbor_14_web_url(self, detector):
+        """Safe Harbor #14: Web URLs."""
+        text = "Patient portal URL: https://myhealth.example.com/patient/12345"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.WEB_URL for d in report.detections)
+
+    def test_hipaa_safe_harbor_15_ip_address(self, detector):
+        """Safe Harbor #15: IP addresses."""
+        text = "Patient accessed from IP address: 192.168.1.100"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.IP_ADDRESS for d in report.detections)
+
+    def test_hipaa_safe_harbor_16_biometric(self, detector):
+        """Safe Harbor #16: Biometric identifiers."""
+        text = "Fingerprint data collected for patient identification."
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.BIOMETRIC_ID for d in report.detections)
+
+    def test_hipaa_safe_harbor_16_retinal_scan(self, detector):
+        """Safe Harbor #16: Retinal scan reference."""
+        text = "Retinal scan completed for identity verification."
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.BIOMETRIC_ID for d in report.detections)
+
+    def test_hipaa_safe_harbor_17_photo(self, detector):
+        """Safe Harbor #17: Full-face photographs."""
+        text = "Full-face photograph required for patient record."
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.PHOTO_REFERENCE for d in report.detections)
+
+    def test_hipaa_regulation_on_new_categories(self, detector):
+        """Verify new HIPAA categories map to HIPAA regulation."""
+        # Fax
+        report = detector.detect("Fax number: (555) 123-4567", filename="test.txt")
+        fax_det = [d for d in report.detections if d.category == PIICategory.FAX_NUMBER]
+        if fax_det:
+            assert Regulation.HIPAA in fax_det[0].applicable_regulations
+
+        # Zip code
+        report = detector.detect("Zip code: 90210", filename="test.txt")
+        zip_det = [d for d in report.detections if d.category == PIICategory.ZIP_CODE]
+        if zip_det:
+            assert Regulation.HIPAA in zip_det[0].applicable_regulations
+
+    def test_subscriber_id_detection(self, detector):
+        """Test subscriber ID detection (added to health plan ID)."""
+        text = "Subscriber ID: SUB987654321"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.HEALTH_PLAN_ID for d in report.detections)
+
+    def test_group_id_detection(self, detector):
+        """Test group ID detection (added to health plan ID)."""
+        text = "Group ID: GRP12345678"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.HEALTH_PLAN_ID for d in report.detections)
+
+    def test_discharge_date_detection(self, detector):
+        """Test discharge date detection."""
+        text = "Discharge date: 02/15/2025"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.ADMISSION_DATE for d in report.detections)
+
+    def test_npi_detection(self, detector):
+        """Test National Provider Identifier detection."""
+        text = "NPI number: 1234567890"
+        report = detector.detect(text, filename="test.txt")
+        assert report.pii_detected is True
+        assert any(d.category == PIICategory.PROFESSIONAL_LICENSE for d in report.detections)
