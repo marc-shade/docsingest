@@ -17,12 +17,10 @@ import json
 import logging
 import os
 import socket
-import time
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -615,6 +613,8 @@ class AuditTrail:
     def _append_to_log(self, entry: AuditEntry) -> None:
         """Append an entry to the audit log file."""
         try:
+            if self.log_path is None:
+                raise ValueError("log_path is required for file operations")
             os.makedirs(os.path.dirname(os.path.abspath(self.log_path)), exist_ok=True)
             with open(self.log_path, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(entry.to_dict(), separators=(',', ':')) + '\n')
