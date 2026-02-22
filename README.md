@@ -1,280 +1,368 @@
 # DocsIngest
 
-Turn any document directory into a prompt-friendly text ingest for LLMs, with a focus on compliance and comprehensive context generation.
+Defense-grade document ingestion with CUI detection, ITAR/EAR export control screening, PII/PHI protection, document sanitization, and FedRAMP-ready audit trails. Turns any document directory into LLM-friendly text while enforcing federal compliance standards.
 
-## 🚀 Features
+## Federal Compliance Coverage
 
-<img src="https://github.com/user-attachments/assets/1d4ff08f-f9ca-4cf8-8164-5bfb2dacaa7e" align="right" style="width:300px;" />
+| Framework | Standard | Coverage |
+|-----------|----------|----------|
+| CUI Program | 32 CFR Part 2002 | CUI marking detection, category validation, marking deficiency checks |
+| NIST 800-171 | SP 800-171 Rev 2 | 20+ security controls mapped (3.1.x, 3.3.x, 3.5.x, 3.8.x, 3.13.x) |
+| NIST 800-53 | SP 800-53 Rev 5 | AU, SI, AC, MP, SC control families |
+| ITAR | 22 CFR 120-130 | USML category detection (I-XXI), technical data screening |
+| EAR | 15 CFR 730-774 | ECCN pattern detection, CCL classification |
+| HIPAA | 45 CFR 160, 164 | PHI detection (MRN, health plan IDs, patient IDs, dates of service) |
+| Privacy Act | 5 USC 552a | PII detection with regulatory mapping |
+| FedRAMP | AU Family | Tamper-evident audit trail with SHA-256 hash chain, CEF export |
+| DFARS | 252.204-7012 | CUI protection requirements for defense contractors |
+| PCI DSS | v4.0 | Credit card number detection |
+| GLBA | 15 USC 6801 | Financial PII detection (routing numbers, SWIFT/BIC, EIN/TIN) |
 
-- **Multi-Format Document Support**
-  - Ingests PDF, DOCX, Markdown, TXT files
-  - Automatic encoding detection
-  - Intelligent file type handling
-  - **NEW**: Extended support for `.xlsx`, `.xls`, `.pptx`, `.json`, `.csv`, `.xml`
+## Architecture
 
-- **Compliance-Focused Ingestion**
-  - Pre-configured Compliance Officer prompt
-  - Customizable AI agent context
-  - Designed for compliance in mind
+```
+docsingest/
+|-- cli.py                          # CLI entry point with defense compliance flags
+|-- ingest.py                       # Core ingestion pipeline with compliance integration
+|-- pii_detector.py                 # Basic PII detection (SpaCy NER + regex)
+|-- tree_generator.py               # Directory tree generation
+|-- compliance/                     # Defense compliance modules
+|   |-- __init__.py                 # Module exports
+|   |-- cui_detector.py             # CUI detection per 32 CFR Part 2002
+|   |-- enhanced_pii.py             # Defense-grade PII/PHI (30+ categories)
+|   |-- sanitizer.py                # Document sanitization engine
+|   |-- export_control.py           # ITAR/EAR screening (60+ keywords)
+|   |-- audit_trail.py              # FedRAMP audit trail with hash chain
+|
+tests/
+|-- test_cui_detector.py            # CUI detection tests
+|-- test_enhanced_pii.py            # Enhanced PII/PHI tests
+|-- test_sanitizer.py               # Sanitization tests
+|-- test_export_control.py          # Export control tests
+|-- test_audit_trail.py             # Audit trail tests
+```
 
-- **Smart File Processing**
-  - Skips system and configuration files
-  - Handles temporary and hidden files
-  - Supports complex directory structures
+## Features
 
-- **Metadata and Reporting**
-  - Generates comprehensive directory structure tree
-  - Counts total files and tokens
-  - Provides summary statistics
+### Document Ingestion
+- Multi-format support: PDF, DOCX, XLSX, XLS, PPTX, JSON, CSV, XML, MD, TXT
+- Automatic encoding detection
+- Semantic compression with configurable levels
+- `.docsingest_ignore` pattern support
+- Comprehensive token counting and reporting
 
-- **Semantic Compression (NEW)**
-  - Intelligently reduce document size while maintaining core meaning
-  - Configurable compression levels
-  - Preserves full original content
-  - Optional compressed view for AI processing
+### CUI Detection (32 CFR Part 2002)
+- Detects CUI markings: `CUI`, `CUI//SP-xxx`, `CUI//REL TO`
+- Validates against CUI Registry categories (CTI, PRVCY, INTEL, EXPT, ITAR, etc.)
+- Detects classification banners: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP SECRET, TS//SCI
+- Detects dissemination controls: NOFORN, REL TO, ORCON, PROPIN, FISA, IMCON
+- Identifies marking deficiencies (missing banners, contradictory markings, legacy FOUO)
+- Generates handling recommendations per NIST 800-171
+- Risk scoring with NIST control mapping
 
-- **Flexible Usage**
-  - Command-line interface
-  - Importable as a Python package
-  - Configurable output options
+### Enhanced PII/PHI Detection
+- **30+ detection categories** with confidence scoring (high/medium/low)
+- Standard PII: email, phone, SSN, credit card, DOB, driver's license, passport, address
+- HIPAA PHI: medical record numbers, health plan IDs, patient IDs, dates of service, diagnoses, prescriptions
+- Defense PII: DoD ID (EDIPI), CAC numbers, security clearance references, CAGE codes, DUNS numbers, SAM UEI
+- Financial PII: bank routing numbers, SWIFT/BIC codes, EIN/TIN, bank accounts, IBAN
+- Export control markers: ITAR markings, EAR markings, controlled technical data
+- Maps each detection to applicable regulations (HIPAA, Privacy Act, ITAR, PCI DSS, GLBA, DFARS)
+- Maps to NIST 800-53 controls (SI-4, SI-19)
+- Prioritized remediation actions
 
-## 📦 Installation
+### Document Sanitization
+- Metadata stripping: author, comments, revision history, tracked changes
+- EXIF data detection in embedded images
+- Hidden text detection: zero-width characters, CSS hiding (display:none, visibility:hidden, zero-font, white-on-white, zero opacity)
+- Macro/script detection and quarantine (VBA, JavaScript, iframes)
+- Embedded file extraction and recursive scanning (OLE objects)
+- Hyperlink analysis for data exfiltration (IP-based URLs, paste services, data URIs)
+- Font fingerprint detection (custom/embedded fonts)
+- Hidden Excel sheets, rows, and columns
+- SHA-256 hashes before/after for integrity verification
+
+### Export Control Screening (ITAR/EAR)
+- USML category references (Category I through XXI) with descriptions
+- ECCN pattern detection (e.g., 3A001, 5D002) with CCL category mapping
+- **60+ controlled technology keywords**: encryption, night vision, armor, propulsion, guidance, stealth, directed energy, nuclear, biological, underwater, electronic warfare, cyber weapons
+- Foreign person/entity detection triggering deemed export rules
+- Technical data indicators (TDPs, engineering drawings, distribution statements)
+- Dual-use technology detection (Wassenaar, MTCR, Australia Group, NSG)
+- Configurable keyword lists for organization-specific screening
+- Export classification recommendations
+
+### Audit Trail (FedRAMP-Ready)
+- Tamper-evident log with SHA-256 hash chain (each entry hashes the previous)
+- Records every document access, transformation, and export
+- Tracks who accessed what, when, from where (actor, host, IP)
+- CEF (Common Event Format) export for SIEM integration (Splunk, ArcSight, QRadar)
+- Chain-of-custody reports for legal/compliance review
+- Integrity verification with tamper detection
+- File-backed persistence with reload capability
+- Maps to NIST 800-53 AU family: AU-2, AU-3, AU-6, AU-8, AU-9, AU-11, AU-12
+- Maps to NIST 800-171: 3.3.1, 3.3.2
+
+## Installation
 
 ```bash
-# Clone the repository
+pip install docsingest
+
+# With compliance module dependencies
+pip install docsingest[compliance]
+
+# Development
+pip install docsingest[dev]
+```
+
+### From Source
+
+```bash
 git clone https://github.com/marc-shade/docsingest.git
 cd docsingest
-
-# Recommended: Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install the package in editable mode
-pip install -e .
+pip install -e ".[compliance,dev]"
 ```
 
-#### Requirements
-- **Python Version**: 3.7 - 3.12 recommended
-- **Dependencies**: All dependencies will be automatically installed via pip
-- **System Requirements**: 
-  - Basic Python development tools
-  - pip package manager
-  - Internet connection for initial setup
+### Requirements
+- Python 3.8+
+- No external service dependencies -- all detection runs locally
 
-## 🚀 Usage
+## Usage
 
-### Basic Document Ingestion
+### Quick Start -- Defense Mode
+
 ```bash
-# Basic usage
+# Full defense compliance scan (CUI + sanitization + export control + enhanced PII + audit)
+docsingest /path/to/documents --defense-mode --audit-log audit.jsonl
+
+# Generate separate compliance report
+docsingest /path/to/documents --defense-mode --compliance-report compliance_report.md
+```
+
+### Individual Compliance Features
+
+```bash
+# CUI detection only
+docsingest /path/to/documents --cui-scan
+
+# Document sanitization only
+docsingest /path/to/documents --sanitize
+
+# Export control screening only
+docsingest /path/to/documents --export-control
+
+# Combined with specific output
+docsingest /path/to/documents --cui-scan --export-control -o analysis.md --audit-log audit.jsonl
+```
+
+### Standard Document Ingestion
+
+```bash
+# Basic ingestion
 docsingest /path/to/documents
 
-# Output to a specific file
+# With compression
+docsingest /path/to/documents --compress --compression-level 0.7
+
+# Custom output path
 docsingest /path/to/documents -o my_report.md
 
-# Verbose mode for detailed logging
-docsingest /path/to/documents -v
-```
-
-### Advanced Features
-
-#### Complete Options List
-```bash
-usage: docsingest [-h] [-o OUTPUT] [--agent AGENT] [-p PROMPT] [--no-pii-analysis] [-v] [--compress] [--compression-level COMPRESSION_LEVEL] directory
-
-Ingest documents from a directory for AI context.
-
-positional arguments:
-  directory             Path to the directory containing documents
-
-options:
-  -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        Output markdown file path (default: document_context.md)
-  --agent AGENT         Initial AI agent prompt (default: Comprehensive Compliance Prompt)
-  -p PROMPT, --prompt PROMPT
-                        Alternate initial AI agent prompt
-  --no-pii-analysis     Disable PII analysis
-  -v, --verbose         Enable verbose output
-  --compress            Compress document content
-  --compression-level COMPRESSION_LEVEL
-                        Compression level (0-1)
-```
-
-#### Content Compression
-```bash
-# Enable content compression
-docsingest /path/to/documents --compress
-
-# Specify compression level (0.0 to 1.0)
-docsingest /path/to/documents --compress --compression-level 0.7
-```
-
-#### Ignore Files and Directories
-Create a `.docsingest_ignore` file in your document directory to exclude specific files and directories:
-
-```bash
-# Example .docsingest_ignore
-*.log       # Ignore all log files
-.git/       # Ignore git directories
-node_modules/  # Ignore dependency directories
-```
-
-#### Ignore Pattern Features
-- Support for regex-based file and directory exclusion
-- Flexible pattern matching
-- Supports comments with `#`
-- Ignore system, hidden, and temporary files
-- Prevent processing of unnecessary directories
-
-### Compliance and PII Analysis
-```bash
 # Disable PII analysis
 docsingest /path/to/documents --no-pii-analysis
 
-# Custom analysis prompt
-docsingest /path/to/documents -p "Analyze these documents for project research"
+# Verbose mode
+docsingest /path/to/documents -v
 ```
 
-## 🐛 Python Package Usage
+### Complete CLI Reference
+
+```
+usage: docsingest [-h] [-o OUTPUT] [--agent AGENT] [-p PROMPT]
+                  [--no-pii-analysis] [-v] [--compress]
+                  [--compression-level COMPRESSION_LEVEL]
+                  [--cui-scan] [--sanitize] [--export-control]
+                  [--defense-mode] [--audit-log PATH]
+                  [--compliance-report PATH]
+                  directory
+
+positional arguments:
+  directory                   Path to the directory containing documents
+
+options:
+  -o, --output OUTPUT         Output markdown file path (default: document_context.md)
+  --agent AGENT               Initial AI agent prompt
+  -p, --prompt PROMPT         Alternate AI agent prompt
+  --no-pii-analysis           Disable PII analysis
+  -v, --verbose               Enable verbose output
+  --compress                  Compress document content
+  --compression-level LEVEL   Compression level (0-1, default: 0.5)
+
+Defense Compliance Options:
+  --cui-scan                  Enable CUI detection per 32 CFR Part 2002
+  --sanitize                  Enable document sanitization
+  --export-control            Enable ITAR/EAR export control screening
+  --defense-mode              Enable ALL compliance features
+  --audit-log PATH            Path for audit trail output (JSONL with hash chain)
+  --compliance-report PATH    Path for separate compliance report (Markdown)
+```
+
+### Python API
 
 ```python
 from docsingest import ingest
 
-# Basic usage
-summary, tree, content = ingest("/path/to/documents")
+# Standard ingestion
+summary, tree, content, pii_reports = ingest("/path/to/documents")
 
-# Custom agent prompt
-summary, tree, content = ingest(
-    "/path/to/documents", 
-    agent_prompt="Specialized Compliance Analyst"
+# Defense mode -- all compliance features enabled
+summary, tree, content, pii_reports = ingest(
+    "/path/to/documents",
+    cui_scan=True,
+    sanitize=True,
+    export_control=True,
+    enhanced_pii=True,
+    audit_log_path="audit.jsonl",
+    compliance_report_path="compliance_report.md",
 )
+
+# Individual modules
+from docsingest.compliance import (
+    CUIDetector,
+    EnhancedPIIDetector,
+    DocumentSanitizer,
+    ExportControlScreener,
+    AuditTrail,
+)
+
+# CUI Detection
+detector = CUIDetector()
+report = detector.detect(text, filename="document.docx")
+print(report.summary)
+
+# Enhanced PII
+pii = EnhancedPIIDetector()
+report = pii.detect(text, filename="personnel.xlsx")
+for detection in report.detections:
+    print(f"{detection.category.value}: {detection.confidence} confidence")
+    print(f"  Regulations: {[r.value for r in detection.applicable_regulations]}")
+
+# Document Sanitization
+sanitizer = DocumentSanitizer()
+report = sanitizer.analyze("/path/to/document.docx")
+print(f"Macros: {report.macros_detected}")
+print(f"Hidden content: {report.hidden_content_detected}")
+print(f"SHA-256: {report.sha256_before}")
+
+# Export Control
+screener = ExportControlScreener()
+report = screener.screen(text, filename="tech_spec.pdf")
+print(f"ITAR findings: {report.itar_findings}")
+print(f"ECCN patterns: {report.eccn_patterns_found}")
+
+# Custom export control keywords
+screener = ExportControlScreener(additional_keywords={
+    "custom tech": ("Custom technology", "ITAR", "high"),
+})
+
+# Audit Trail
+trail = AuditTrail(log_path="audit.jsonl", actor="analyst")
+trail.log_document_access("/path/to/doc.txt")
+trail.log_compliance_scan("/path/to/doc.txt", "pii", 5, 75)
+
+# Verify integrity
+result = trail.verify_integrity()
+assert result["verified"] is True
+
+# Export for SIEM
+trail.export_cef("audit.cef")
+
+# Chain of custody report
+custody = trail.generate_chain_of_custody_report()
 ```
 
-## 🛠️ Supported File Types
+## Compliance Feature Matrix
 
-- PDF
-- Microsoft Word (.docx)
+| Feature | `--cui-scan` | `--sanitize` | `--export-control` | `--defense-mode` |
+|---------|:---:|:---:|:---:|:---:|
+| CUI marking detection | X | | | X |
+| Classification banners | X | | | X |
+| Dissemination controls | X | | | X |
+| Marking compliance check | X | | | X |
+| Metadata stripping | | X | | X |
+| Hidden text detection | | X | | X |
+| Macro detection | | X | | X |
+| EXIF analysis | | X | | X |
+| Font fingerprinting | | X | | X |
+| USML category screening | | | X | X |
+| ECCN pattern detection | | | X | X |
+| Controlled tech keywords | | | X | X |
+| Foreign entity detection | | | X | X |
+| Enhanced PII/PHI (30+ types) | | | | X |
+| Defense-specific PII | | | | X |
+| Financial PII | | | | X |
+| Audit trail | with `--audit-log` | with `--audit-log` | with `--audit-log` | with `--audit-log` |
+
+## Supported File Types
+
+- PDF (.pdf)
+- Microsoft Word (.docx, .doc)
 - Microsoft Excel (.xlsx, .xls)
-- Microsoft PowerPoint (.pptx)
+- Microsoft PowerPoint (.pptx, .ppt)
 - Markdown (.md)
 - Plain Text (.txt)
-- CSV
-- XML
-- JSON
+- CSV (.csv)
+- XML (.xml)
+- JSON (.json)
 
-## 🚫 Automatically Skipped Files
+## Ignore Patterns
 
-- `.DS_Store`
-- Temporary Office files (`~$`)
-- Temporary files (`.tmp`)
-- Log files
-- Git-related files and directories
-- IDE configuration directories
-- Python cache and virtual environment files
+Create a `.docsingest_ignore` file in your document directory:
 
-## 🔍 Regulatory Compliance Framework
+```
+# Ignore log files
+*.log
 
-DocsIngest provides a robust, multi-layered approach to regulatory compliance and document risk management:
+# Ignore git directories
+.git/
 
-### 🛡️ Comprehensive Compliance Features
-
-#### Regulatory Compliance Overview
-- **Multi-Jurisdiction Support**: Designed to handle compliance requirements across various regulatory landscapes
-- **Adaptive Compliance Scanning**: Intelligent detection of sensitive information and potential regulatory risks
-- **Configurable Compliance Profiles**: Customizable settings for different industry standards and regulations
-
-#### Risk Assessment Workflow
-1. **Document Ingestion Analysis**
-   - Automatic classification of document types
-   - Identification of sensitive and regulated content
-   - Contextual risk scoring
-
-2. **Compliance Risk Evaluation**
-   - Detect potential regulatory violations
-   - Flag documents with high-risk content
-   - Generate detailed compliance reports
-
-3. **Proactive Monitoring**
-   - Continuous document scanning
-   - Real-time alerts for compliance breaches
-   - Audit trail generation
-
-### 🔒 Supported Compliance Domains
-- GDPR (General Data Protection Regulation)
-- HIPAA (Health Insurance Portability and Accountability Act)
-- CCPA (California Consumer Privacy Act)
-- SOX (Sarbanes-Oxley Act)
-- PCI DSS (Payment Card Industry Data Security Standard)
-- NIST Framework
-- ISO 27001 Information Security Management
-
-### 🚨 Key Compliance Capabilities
-- **Advanced PII Detection**
-  - Identify sensitive personal information
-  - Support for multiple PII categories:
-    * Names
-    * Email addresses
-    * Phone numbers
-    * Social Security Numbers
-    * Credit card numbers
-- **Intelligent Redaction**
-  - Automatic masking of sensitive information
-  - Configurable redaction levels
-- **Comprehensive Compliance Reporting**
-  - Detailed risk assessment
-  - Actionable compliance recommendations
-- **Multi-Regulation Support**
-  - Compliance checks for GDPR, FERPA, COPPA
-  - Proactive regulatory alignment
-
-### 🔍 Compliance Verification Process
-1. Document Ingestion
-2. Automated PII Scanning
-3. Risk Assessment and Scoring
-4. Compliance Reporting
-5. Optional Redaction
-
-**Note**: While DocsIngest provides powerful compliance tools, it is not a substitute for professional legal or compliance advice. Always consult with compliance experts for your specific regulatory requirements.
-
-## 📦 Version Information
-
-**Current Version**: 1.1.1
-**Last Updated**: 2025-01-06
-**Maintained by**: Marc Shade (marc@2acrestudios.com)
-
-## 🚀 Roadmap
-
-- [x] Support more file types
-- [ ] Cloud storage integration
-- [ ] Advanced AI prompt customization
-- [ ] Support for additional specialized file formats (e.g., .rtf, .odt)
-
-## 🔧 Development
-
-```bash
-# Clone the repository
-git clone https://github.com/marc-shade/docsingest.git
-cd docsingest
-
-# Create virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-# Run tests
-pytest tests/
+# Ignore dependencies
+node_modules/
 ```
 
-## 🤝 Contributing
+## Testing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+```bash
+# Run all tests
+pytest tests/ -v
 
-## 📄 License
+# Run specific module tests
+pytest tests/test_cui_detector.py -v
+pytest tests/test_enhanced_pii.py -v
+pytest tests/test_sanitizer.py -v
+pytest tests/test_export_control.py -v
+pytest tests/test_audit_trail.py -v
+```
+
+## Development
+
+```bash
+git clone https://github.com/marc-shade/docsingest.git
+cd docsingest
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[compliance,dev]"
+pytest tests/ -v
+```
+
+## Version History
+
+- **0.2.0** -- Defense compliance upgrade: CUI detection, enhanced PII/PHI, document sanitization, ITAR/EAR screening, FedRAMP audit trails
+- **0.1.34** -- Multi-format support, semantic compression, basic PII detection
+
+## License
 
 MIT License
+
+## Disclaimer
+
+While DocsIngest provides comprehensive compliance scanning tools, it is a screening aid and not a substitute for professional legal, compliance, or security review. Organizations handling CUI, classified information, or export-controlled data must follow their established security procedures and consult qualified compliance personnel. Always verify findings against authoritative sources and organizational policies.

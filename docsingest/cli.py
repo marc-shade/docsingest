@@ -1,4 +1,6 @@
 import argparse
+import json
+import os
 import sys
 from typing import Optional
 
@@ -19,10 +21,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     parser.add_argument("directory", help="Path to the directory containing documents")
 
-    parser.add_argument("-o", "--output", default="document_context.md", 
+    parser.add_argument("-o", "--output", default="document_context.md",
                         help="Output markdown file path (default: document_context.md)")
 
-    parser.add_argument("--agent", default=None, 
+    parser.add_argument("--agent", default=None,
                         help="Initial AI agent prompt (default: Comprehensive Compliance Prompt)")
 
     # Restore hidden arguments for visibility
@@ -32,11 +34,44 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--compress", action="store_true", help="Compress document content")
     parser.add_argument("--compression-level", type=float, default=0.5, help="Compression level (0-1)")
 
+    # Defense compliance flags
+    compliance_group = parser.add_argument_group("Defense Compliance Options")
+    compliance_group.add_argument(
+        "--cui-scan", action="store_true",
+        help="Enable CUI (Controlled Unclassified Information) detection per 32 CFR Part 2002"
+    )
+    compliance_group.add_argument(
+        "--sanitize", action="store_true",
+        help="Enable document sanitization (metadata stripping, hidden content detection)"
+    )
+    compliance_group.add_argument(
+        "--export-control", action="store_true",
+        help="Enable ITAR/EAR export control screening"
+    )
+    compliance_group.add_argument(
+        "--defense-mode", action="store_true",
+        help="Enable ALL compliance features (CUI, sanitization, export control, enhanced PII)"
+    )
+    compliance_group.add_argument(
+        "--audit-log", type=str, default=None, metavar="PATH",
+        help="Path for audit trail output (JSON lines with SHA-256 hash chain)"
+    )
+    compliance_group.add_argument(
+        "--compliance-report", type=str, default=None, metavar="PATH",
+        help="Path for separate compliance report output (Markdown)"
+    )
+
     args = parser.parse_args(argv)
 
     try:
         # Use default compliance prompt if not specified
         agent_prompt = args.agent or args.prompt or DEFAULT_COMPLIANCE_PROMPT
+
+        # Determine which compliance features are enabled
+        cui_scan = args.cui_scan or args.defense_mode
+        sanitize = args.sanitize or args.defense_mode
+        export_control = args.export_control or args.defense_mode
+        enhanced_pii = args.defense_mode  # Enhanced PII only in defense mode or when PII is enabled
 
         # Perform document ingestion
         summary, tree, content, pii_reports = ingest(
@@ -46,7 +81,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             pii_analysis=not args.no_pii_analysis if hasattr(args, 'no_pii_analysis') else True,
             verbose=args.verbose if hasattr(args, 'verbose') else False,
             compress_content=args.compress if hasattr(args, 'compress') else False,
-            compression_level=args.compression_level if hasattr(args, 'compression_level') else 0.5
+            compression_level=args.compression_level if hasattr(args, 'compression_level') else 0.5,
+            cui_scan=cui_scan,
+            sanitize=sanitize,
+            export_control=export_control,
+            enhanced_pii=enhanced_pii,
+            audit_log_path=args.audit_log,
+            compliance_report_path=args.compliance_report,
         )
 
         # Print summary to console
@@ -60,6 +101,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         # Indicate successful completion
         print(f"\nDocument analysis complete. Output: {args.output}")
+
+        if args.compliance_report:
+            print(f"Compliance report: {args.compliance_report}")
+        if args.audit_log:
+            print(f"Audit trail: {args.audit_log}")
 
         return 0
 
