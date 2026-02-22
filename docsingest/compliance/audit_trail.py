@@ -613,10 +613,11 @@ class AuditTrail:
     def _append_to_log(self, entry: AuditEntry) -> None:
         """Append an entry to the audit log file."""
         try:
-            if self.log_path is None:
+            log_path = self.log_path
+            if log_path is None:
                 raise ValueError("log_path is required for file operations")
-            os.makedirs(os.path.dirname(os.path.abspath(self.log_path)), exist_ok=True)
-            with open(self.log_path, 'a', encoding='utf-8') as f:
+            os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
+            with open(log_path, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(entry.to_dict(), separators=(',', ':')) + '\n')
         except Exception as e:
             logger.error("Failed to write audit entry to %s: %s", self.log_path, e)

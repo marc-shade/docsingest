@@ -432,7 +432,7 @@ class CUIDetector:
 
     def _check_marking_compliance(
         self,
-        text: str,
+        _text: str,
         cui_markings: List[CUIMarking],
         banners: List[ClassificationBanner],
         dissemination_controls: List[DisseminationMarking],
