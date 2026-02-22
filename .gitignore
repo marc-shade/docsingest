@@ -24,6 +24,8 @@ MANIFEST
 # Sensitive Files and Secrets
 *.env
 .env
+.env.*
+!.env.example
 *.secret
 *.key
 *.pem
@@ -52,6 +54,7 @@ bump_version.py
 # Logs and Databases
 *.log
 *.sqlite
+*.sqlite3
 *.db
 
 # Virtual Environment
@@ -68,6 +71,12 @@ document_context.md
 # IDE
 .idea/
 .vscode/
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+.mypy_cache/
 
 # OS
 .DS_Store
