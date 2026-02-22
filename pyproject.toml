@@ -53,6 +53,7 @@ processing = [
 compliance = [
     "spacy>=3.6,<4.0",
     "nltk>=3.5",
+    "Pillow>=9.0",
 ]
 dev = [
     "pytest",

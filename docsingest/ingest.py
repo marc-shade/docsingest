@@ -139,10 +139,17 @@ def ingest(
             )
             document_context['compliance_results'] = compliance_results
         elif any_compliance and not COMPLIANCE_AVAILABLE:
-            logger.warning(
+            msg = (
                 "Compliance features requested but compliance modules not available. "
                 "Install with: pip install docsingest[compliance]"
             )
+            # In defense mode, missing compliance modules is a hard error
+            if cui_scan and sanitize and export_control and enhanced_pii:
+                raise RuntimeError(
+                    f"DEFENSE MODE ERROR: {msg} "
+                    "Defense mode requires all compliance modules to be installed."
+                )
+            logger.warning(msg)
 
         # Write document context to file
         write_document_context(document_context)

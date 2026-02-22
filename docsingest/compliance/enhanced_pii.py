@@ -132,6 +132,21 @@ class EnhancedPIIDetector:
         self._build_patterns()
         logger.info("Enhanced PII Detector initialized with %d pattern categories", len(self.PATTERNS))
 
+    @staticmethod
+    def _luhn_check(number_str: str) -> bool:
+        """Validate a number string using the Luhn algorithm."""
+        digits = [int(d) for d in number_str if d.isdigit()]
+        if len(digits) < 13 or len(digits) > 19:
+            return False
+        checksum = 0
+        for i, d in enumerate(reversed(digits)):
+            if i % 2 == 1:
+                d *= 2
+                if d > 9:
+                    d -= 9
+            checksum += d
+        return checksum % 10 == 0
+
     def _build_patterns(self) -> None:
         """Build all detection patterns with regulatory mappings."""
         self.PATTERNS = {
@@ -469,6 +484,11 @@ class EnhancedPIIDetector:
         for line_num, line in enumerate(lines, 1):
             for category, (pattern, base_confidence, regulations, controls, remediation) in self.PATTERNS.items():
                 for match in pattern.finditer(line):
+                    # Validate credit card numbers with Luhn algorithm
+                    if category == PIICategory.CREDIT_CARD:
+                        if not self._luhn_check(match.group(0)):
+                            continue
+
                     # Calculate confidence based on context
                     confidence = self._assess_confidence(
                         match.group(0), line, base_confidence, category

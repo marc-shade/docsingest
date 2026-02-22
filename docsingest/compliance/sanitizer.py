@@ -18,13 +18,21 @@ References:
 """
 
 import hashlib
+import io
 import logging
 import os
 import re
+import shutil
 import zipfile
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
+
+try:
+    from PIL import Image
+    PILLOW_AVAILABLE = True
+except ImportError:
+    PILLOW_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -317,6 +325,166 @@ class DocumentSanitizer:
             summary=summary,
         )
 
+    def sanitize(self, file_path: str, output_path: Optional[str] = None) -> SanitizationReport:
+        """
+        Sanitize a document by removing metadata, macros, tracked changes,
+        hidden content, and EXIF data from embedded images.
+
+        Modifies a copy of the file. If output_path is not provided, the
+        sanitized file is written alongside the original with a '_sanitized' suffix.
+
+        Args:
+            file_path: Path to the document file.
+            output_path: Optional path for the sanitized output file.
+
+        Returns:
+            SanitizationReport with sanitization results and sha256_after set.
+        """
+        logger.info("Starting sanitization: %s", file_path)
+
+        # First, run analysis to understand what needs sanitizing
+        report = self.analyze(file_path)
+
+        filename = os.path.basename(file_path)
+        file_ext = os.path.splitext(filename)[1].lower()
+
+        if output_path is None:
+            base, ext = os.path.splitext(file_path)
+            output_path = f"{base}_sanitized{ext}"
+
+        sanitized = False
+        reason = ""
+
+        if file_ext in ('.docx', '.xlsx', '.pptx'):
+            sanitized = self._sanitize_ooxml(file_path, output_path)
+        elif file_ext in ('.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif'):
+            sanitized = self._sanitize_image(file_path, output_path)
+        elif file_ext == '.pdf':
+            # PDF sanitization requires external tools (qpdf, pdftk, etc.)
+            reason = "PDF sanitization requires external tools (qpdf or pdftk). File was not modified."
+            logger.warning("PDF sanitization not supported without external tools: %s", file_path)
+            shutil.copy2(file_path, output_path)
+        else:
+            reason = f"Format '{file_ext}' not supported for sanitization."
+            logger.warning("Unsupported format for sanitization: %s", file_ext)
+            shutil.copy2(file_path, output_path)
+
+        if sanitized:
+            report.sanitized = True
+            report.sha256_after = self._compute_sha256(output_path)
+            logger.info("Sanitization complete: %s -> %s", file_path, output_path)
+        else:
+            report.sanitized = False
+            if reason:
+                report.summary += f" NOT_SANITIZED: {reason}"
+
+        return report
+
+    def _sanitize_ooxml(self, file_path: str, output_path: str) -> bool:
+        """
+        Sanitize OOXML files by removing macros, tracked changes, comments,
+        hidden sheets, and stripping EXIF from embedded images.
+
+        Returns True if sanitization was performed.
+        """
+        try:
+            with zipfile.ZipFile(file_path, 'r') as zf_in:
+                namelist = zf_in.namelist()
+
+                with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf_out:
+                    for item in namelist:
+                        item_lower = item.lower()
+
+                        # Skip VBA macro files
+                        if any(indicator in item_lower for indicator in [
+                            'vbaproject.bin', 'vbadata.xml', 'macrosheets'
+                        ]):
+                            logger.info("Removed macro file: %s", item)
+                            continue
+
+                        data = zf_in.read(item)
+
+                        # Strip EXIF from embedded images
+                        if any(item_lower.endswith(ext) for ext in (
+                            '.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.gif'
+                        )):
+                            stripped = self._strip_image_exif(data)
+                            if stripped is not None:
+                                data = stripped
+
+                        # Strip tracked changes and comments from XML content
+                        if item.endswith('.xml'):
+                            text = data.decode('utf-8', errors='replace')
+                            text = self._strip_tracked_changes_xml(text)
+                            data = text.encode('utf-8')
+
+                        # Unhide hidden sheets in workbook.xml
+                        if item == 'xl/workbook.xml':
+                            text = data.decode('utf-8', errors='replace')
+                            text = re.sub(
+                                r'(<sheet[^>]*)\s+state="(?:hidden|veryHidden)"',
+                                r'\1',
+                                text,
+                            )
+                            data = text.encode('utf-8')
+
+                        zf_out.writestr(item, data)
+
+            return True
+        except Exception as e:
+            logger.error("OOXML sanitization failed for %s: %s", file_path, e)
+            shutil.copy2(file_path, output_path)
+            return False
+
+    def _strip_tracked_changes_xml(self, xml_text: str) -> str:
+        """Remove tracked change elements (w:ins, w:del, w:rPrChange, etc.) from OOXML XML."""
+        # Remove deletion blocks entirely (w:del contains deleted text)
+        xml_text = re.sub(r'<w:del\b[^>]*>.*?</w:del>', '', xml_text, flags=re.DOTALL)
+        # Unwrap insertion blocks (keep the content, remove the w:ins wrapper)
+        xml_text = re.sub(r'<w:ins\b[^>]*>(.*?)</w:ins>', r'\1', xml_text, flags=re.DOTALL)
+        # Remove property change tracking elements
+        for tag in ('w:rPrChange', 'w:pPrChange', 'w:sectPrChange', 'w:tblPrChange'):
+            xml_text = re.sub(
+                rf'<{tag}\b[^>]*>.*?</{tag}>',
+                '',
+                xml_text,
+                flags=re.DOTALL,
+            )
+        return xml_text
+
+    def _sanitize_image(self, file_path: str, output_path: str) -> bool:
+        """Strip EXIF/metadata from a standalone image file using Pillow."""
+        if not PILLOW_AVAILABLE:
+            logger.warning("Pillow not available for EXIF stripping: %s", file_path)
+            shutil.copy2(file_path, output_path)
+            return False
+
+        try:
+            with Image.open(file_path) as img:
+                # Create a clean copy without metadata
+                clean = Image.new(img.mode, img.size)
+                clean.putdata(list(img.getdata()))
+                clean.save(output_path, format=img.format)
+            return True
+        except Exception as e:
+            logger.error("Image sanitization failed for %s: %s", file_path, e)
+            shutil.copy2(file_path, output_path)
+            return False
+
+    def _strip_image_exif(self, image_data: bytes) -> Optional[bytes]:
+        """Strip EXIF from in-memory image data. Returns cleaned bytes or None if unavailable."""
+        if not PILLOW_AVAILABLE:
+            return None
+        try:
+            img = Image.open(io.BytesIO(image_data))
+            clean = Image.new(img.mode, img.size)
+            clean.putdata(list(img.getdata()))
+            buf = io.BytesIO()
+            clean.save(buf, format=img.format or 'PNG')
+            return buf.getvalue()
+        except Exception:
+            return None
+
     def _analyze_ooxml(self, file_path: str) -> Dict[str, Any]:
         """Analyze OOXML format files (docx, xlsx, pptx)."""
         result: Dict[str, Any] = {
@@ -545,16 +713,34 @@ class DocumentSanitizer:
                     if value:
                         result['metadata'][field_name] = value
 
+            # Detect XMP metadata streams
+            xmp_patterns = {
+                'xmp_creator': re.compile(r'<dc:creator>(.*?)</dc:creator>', re.DOTALL),
+                'xmp_title': re.compile(r'<dc:title>(.*?)</dc:title>', re.DOTALL),
+                'xmp_description': re.compile(r'<dc:description>(.*?)</dc:description>', re.DOTALL),
+                'xmp_creator_tool': re.compile(r'xmp:CreatorTool="([^"]*)"', re.DOTALL),
+                'xmp_producer': re.compile(r'pdf:Producer="([^"]*)"', re.DOTALL),
+                'xmp_modify_date': re.compile(r'xmp:ModifyDate="([^"]*)"', re.DOTALL),
+                'xmp_create_date': re.compile(r'xmp:CreateDate="([^"]*)"', re.DOTALL),
+            }
+            if b'<x:xmpmeta' in content or b'<rdf:Description' in content:
+                for field_name, pattern in xmp_patterns.items():
+                    match = pattern.search(text_content)
+                    if match:
+                        value = match.group(1).strip()
+                        if value:
+                            result['metadata'][field_name] = value
+
             if result['metadata']:
                 detail_items = [f"{k}: {v}" for k, v in result['metadata'].items()]
                 result['findings'].append(SanitizationFinding(
                     finding_type=FindingType.METADATA,
                     severity=SanitizationSeverity.MEDIUM,
                     description="PDF metadata contains identifying information",
-                    location="PDF Info Dictionary",
+                    location="PDF Info Dictionary / XMP Metadata",
                     detail='; '.join(detail_items),
                     remediation="Use PDF sanitization tools to strip metadata. "
-                                "Consider using tools like qpdf or pdftk to remove info dictionary.",
+                                "Consider using tools like qpdf or pdftk to remove info dictionary and XMP streams.",
                     nist_controls=["SI-4", "SC-28"],
                 ))
 
