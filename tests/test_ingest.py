@@ -9,14 +9,14 @@ def test_ingest_directory():
     output_file = "/Volumes/FILES/code/content_ingest/test_output.md"
 
     summary, tree, content, _ = ingest(
-        directory=test_dir,
+        input_directory=test_dir,
         agent_prompt="Test Compliance Officer",
         output_file=output_file,
     )
 
     # Validate summary
-    assert "**Total Files**" in summary
-    assert "**Total Tokens**" in summary
+    assert "- **Total Files Processed**:" in summary
+    assert "- **Total Tokens**:" in summary
 
     # Validate tree
     assert len(tree.split("\n")) > 0
@@ -32,9 +32,9 @@ def test_empty_directory():
     test_dir = "/tmp/empty_test_dir"
     os.makedirs(test_dir, exist_ok=True)
 
-    summary, tree, content, _ = ingest(directory=test_dir)
+    summary, tree, content, _ = ingest(input_directory=test_dir)
 
-    assert "**Total Files**: 0" in summary
+    assert "- **Total Files Processed**: 0" in summary
 
     # Clean up
     os.rmdir(test_dir)

@@ -33,9 +33,9 @@ echo "Installing development dependencies..."
 pip install -r "$PROJECT_ROOT/requirements-dev.txt"
 
 # Download SpaCy language model
-python3 -m spacy download en_core_web_sm
+# python3 -m spacy download en_core_web_sm
 
 # Deactivate virtual environment
-deactivate
+# deactivate
 
 echo "Dependencies installed successfully!"
