@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "docsingest"
-version = "0.1.34"
-description = "Document ingestion tool with compliance features"
+version = "0.2.0"
+description = "Defense-grade document ingestion with CUI detection, ITAR/EAR screening, PII/PHI protection, and FedRAMP-ready audit trails"
 readme = "README.md"
 authors = [{name = "Marc Shade", email = "marc@2acrestudios.com"}]
 license = {file = "LICENSE"}
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "requests>=2.25.0",
     "chardet>=3.0.0",
@@ -21,11 +21,11 @@ dependencies = [
 ]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Information Technology",
+    "Intended Audience :: Legal Industry",
     "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -34,15 +34,25 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing",
+    "Topic :: Security",
     "Topic :: Utilities"
 ]
-keywords = ["document-processing", "ai", "compliance", "llm", "text-extraction"]
+keywords = [
+    "document-processing", "ai", "compliance", "llm", "text-extraction",
+    "cui", "nist-800-171", "nist-800-53", "itar", "ear", "export-control",
+    "pii-detection", "phi-detection", "fedramp", "defense", "cybersecurity",
+    "document-sanitization", "audit-trail"
+]
 
 [project.optional-dependencies]
 processing = [
     "PyPDF2",
     "chardet",
     "requests"
+]
+compliance = [
+    "spacy>=3.6,<4.0",
+    "nltk>=3.5",
 ]
 dev = [
     "pytest",
