@@ -17,6 +17,7 @@ def _ensure_nltk_data():
     if _nltk_downloaded:
         return
     try:
+        nltk.download('punkt_tab', quiet=True)
         nltk.download('punkt', quiet=True)
         nltk.download('stopwords', quiet=True)
     except Exception as e:
