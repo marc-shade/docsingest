@@ -1,10 +1,9 @@
 # DocsIngest
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-green)](https://python.org)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-green)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![HIPAA](https://img.shields.io/badge/HIPAA-Safe_Harbor-red)]()
-[![NIST 800-171](https://img.shields.io/badge/NIST-800--171-blue)]()
-[![FedRAMP](https://img.shields.io/badge/FedRAMP-Ready-orange)]()
+[![HIPAA](https://img.shields.io/badge/HIPAA-Safe_Harbor_Screening-blue)]()
+[![NIST 800-171](https://img.shields.io/badge/NIST_800--171-Control_Mapping-blue)]()
 
 Document ingestion with CUI detection, ITAR/EAR export control screening, PII/PHI protection, document sanitization, and audit trails with hash-chain integrity. Turns any document directory into LLM-friendly text with compliance screening capabilities. Designed to assist with — not replace — professional compliance review.
 
