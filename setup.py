@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='docsingest',
-    version="0.2.0",
+    version="0.2.1",
     description='Defense-grade document ingestion with CUI detection, ITAR/EAR screening, PII/PHI protection, and FedRAMP-ready audit trails',
     long_description=long_description,
     long_description_content_type='text/markdown',
