@@ -6,7 +6,7 @@
 [![NIST 800-171](https://img.shields.io/badge/NIST-800--171-blue)]()
 [![FedRAMP](https://img.shields.io/badge/FedRAMP-Ready-orange)]()
 
-Defense-grade document ingestion with CUI detection, ITAR/EAR export control screening, PII/PHI protection, document sanitization, and FedRAMP-ready audit trails. Turns any document directory into LLM-friendly text while enforcing federal compliance standards.
+Document ingestion with CUI detection, ITAR/EAR export control screening, PII/PHI protection, document sanitization, and audit trails with hash-chain integrity. Turns any document directory into LLM-friendly text with compliance screening capabilities. Designed to assist with — not replace — professional compliance review.
 
 ## Federal Compliance Coverage
 
@@ -158,7 +158,7 @@ pip install -e ".[compliance,dev]"
 ```
 
 ### Requirements
-- Python 3.8+
+- Python 3.9+
 - No external service dependencies -- all detection runs locally
 
 ## Usage
@@ -390,8 +390,9 @@ pytest tests/ -v
 
 ## Version History
 
+- **0.2.2** -- Security and reliability audit: removed leaked credentials, fixed crash bug (glob patterns in ignore files), PII detector now fails-closed, removed network beacon from audit trail, added file locking for audit log, fixed operator precedence bug in CLI, fixed file handle leaks, removed unsupported .doc/.ppt format claims, improved token counting with tiktoken, Python 3.9+ minimum
 - **0.2.1** -- Full HIPAA Safe Harbor coverage (all 18 identifiers), 80+ CUI Registry subcategories, regex bug fixes, 213 passing tests
-- **0.2.0** -- Defense compliance upgrade: CUI detection, enhanced PII/PHI, document sanitization, ITAR/EAR screening, FedRAMP audit trails
+- **0.2.0** -- Compliance upgrade: CUI detection, enhanced PII/PHI, document sanitization, ITAR/EAR screening, audit trails
 - **0.1.34** -- Multi-format support, semantic compression, basic PII detection
 
 ## License

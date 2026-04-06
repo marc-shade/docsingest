@@ -1,13 +1,11 @@
 import argparse
-import json
-import os
 import sys
-from typing import Optional
+from typing import List, Optional
 
 from .ingest import DEFAULT_COMPLIANCE_PROMPT, ingest
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     """
     Command-line interface for docsingest.
 
@@ -74,14 +72,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         enhanced_pii = args.defense_mode  # Enhanced PII only in defense mode or when PII is enabled
 
         # Perform document ingestion
+        pii_enabled = not args.no_pii_analysis
         summary, tree, content, pii_reports = ingest(
             args.directory,
             agent_prompt=agent_prompt,
             output_file=args.output,
-            pii_analysis=not args.no_pii_analysis if hasattr(args, 'no_pii_analysis') else True,
-            verbose=args.verbose if hasattr(args, 'verbose') else False,
-            compress_content=args.compress if hasattr(args, 'compress') else False,
-            compression_level=args.compression_level if hasattr(args, 'compression_level') else 0.5,
+            pii_analysis=pii_enabled,
+            verbose=args.verbose,
+            compress_content=args.compress,
+            compression_level=args.compression_level,
             cui_scan=cui_scan,
             sanitize=sanitize,
             export_control=export_control,
@@ -94,7 +93,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(summary)
 
         # If PII analysis was performed, print detailed PII reports
-        if not args.no_pii_analysis if hasattr(args, 'no_pii_analysis') else True and pii_reports:
+        if pii_enabled and pii_reports:
             print("\n## Detailed PII Analysis")
             for filename, report in pii_reports.items():
                 _print_pii_report(filename, report)

@@ -12,6 +12,7 @@ References:
 - CEF (ArcSight Common Event Format)
 """
 
+import fcntl
 import hashlib
 import json
 import logging
@@ -142,7 +143,7 @@ class AuditEntry:
         ext_str = ' '.join(extensions)
 
         return (
-            f"CEF:0|docsingest|ComplianceAudit|0.2.1|"
+            f"CEF:0|docsingest|ComplianceAudit|0.2.2|"
             f"{self.event_type}|{self.action}|{cef_severity}|{ext_str}"
         )
 
@@ -600,25 +601,26 @@ class AuditTrail:
 
     @staticmethod
     def _get_local_ip() -> str:
-        """Get the local IP address for audit entries."""
+        """Get the local IP address for audit entries without external network calls."""
         try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip = s.getsockname()[0]
-            s.close()
-            return ip
+            return socket.gethostbyname(socket.gethostname())
         except Exception:
             return "127.0.0.1"
 
     def _append_to_log(self, entry: AuditEntry) -> None:
-        """Append an entry to the audit log file."""
+        """Append an entry to the audit log file with exclusive locking."""
         try:
             log_path = self.log_path
             if log_path is None:
                 raise ValueError("log_path is required for file operations")
             os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
             with open(log_path, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(entry.to_dict(), separators=(',', ':')) + '\n')
+                fcntl.flock(f, fcntl.LOCK_EX)
+                try:
+                    f.write(json.dumps(entry.to_dict(), sort_keys=True, separators=(',', ':')) + '\n')
+                    f.flush()
+                finally:
+                    fcntl.flock(f, fcntl.LOCK_UN)
         except Exception as e:
             logger.error("Failed to write audit entry to %s: %s", self.log_path, e)
 
@@ -652,7 +654,10 @@ class AuditTrail:
                         self.entries.append(entry)
                         self._previous_hash = entry.entry_hash
                     except (KeyError, json.JSONDecodeError) as e:
-                        logger.warning("Skipping malformed audit entry: %s", e)
+                        logger.error(
+                            "AUDIT INTEGRITY: Malformed entry in %s: %s — entry skipped, "
+                            "manual review required", log_path, e
+                        )
 
             logger.info("Loaded %d existing audit entries from %s", len(self.entries), log_path)
 

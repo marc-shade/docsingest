@@ -41,6 +41,8 @@ config.ini
 *.config
 secrets.yaml
 secrets.yml
+.pypirc
+pypi_token.txt
 
 # Sensitive Python Files
 bump_version.py

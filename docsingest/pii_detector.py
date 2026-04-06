@@ -14,12 +14,17 @@ class PIIDetector:
 
         Args:
             model: SpaCy language model for NER
+
+        Raises:
+            RuntimeError: If the SpaCy model cannot be loaded.
         """
         try:
             self.nlp = spacy.load(model)
         except OSError:
-            logging.warning(f"SpaCy {model} load failed.")
-            self.nlp = None
+            raise RuntimeError(
+                f"SpaCy model '{model}' is not installed. "
+                f"Install it with: python -m spacy download {model}"
+            )
 
     def detect(self, text: str) -> Dict[str, Optional[List[str]]]:
         """
@@ -31,11 +36,6 @@ class PIIDetector:
         Returns:
             PII detection report
         """
-        if not self.nlp:
-            return {
-                "pii_detected": False,
-                "error": "SpaCy model not loaded",
-            }
 
         # Named Entity Recognition for PII
         doc = self.nlp(text)
@@ -48,7 +48,7 @@ class PIIDetector:
                 r"[\s.-]?\d{3}[\s.-]?\d{4}\b"
             ),
             "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
-            "credit_card": r"\b(?:\d{4}[-\s]?){3}\d{4}\b",
+            "credit_card": r"\b(?:\d{4}[-\s]){3}\d{4}\b",
         }
 
         # Collect PII findings
@@ -60,9 +60,9 @@ class PIIDetector:
             "credit_cards": [],
         }
 
-        # Extract named entities
+        # Extract named entities (PERSON only — ORG is not PII)
         for ent in doc.ents:
-            if ent.label_ in ["PERSON", "ORG"]:
+            if ent.label_ == "PERSON":
                 pii_details["names"].append(ent.text)
 
         # Regex-based PII detection
@@ -191,7 +191,15 @@ def analyze_document_compliance(
     Returns:
         Compliance analysis results
     """
-    with open(document_path, "r", encoding="utf-8") as f:
+    try:
+        import chardet
+        with open(document_path, "rb") as fb:
+            raw = fb.read()
+        detected = chardet.detect(raw)
+        encoding = detected.get("encoding", "utf-8") or "utf-8"
+    except ImportError:
+        encoding = "utf-8"
+    with open(document_path, "r", encoding=encoding, errors="replace") as f:
         text = f.read()
 
     detector = PIIDetector()
