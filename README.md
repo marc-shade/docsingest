@@ -390,7 +390,7 @@ pytest tests/ -v
 
 ## Version History
 
-- **0.2.2** -- Security and reliability audit: removed leaked credentials, fixed crash bug (glob patterns in ignore files), PII detector now fails-closed, removed network beacon from audit trail, added file locking for audit log, fixed operator precedence bug in CLI, fixed file handle leaks, removed unsupported .doc/.ppt format claims, improved token counting with tiktoken, Python 3.9+ minimum
+- **0.2.2** -- Security and reliability improvements: fixed crash bug (glob patterns in ignore files), PII detector now fails-closed, added file locking for audit log, fixed operator precedence bug in CLI, fixed file handle leaks, improved token counting with tiktoken, Python 3.9+ minimum
 - **0.2.1** -- Full HIPAA Safe Harbor coverage (all 18 identifiers), 80+ CUI Registry subcategories, regex bug fixes, 213 passing tests
 - **0.2.0** -- Compliance upgrade: CUI detection, enhanced PII/PHI, document sanitization, ITAR/EAR screening, audit trails
 - **0.1.34** -- Multi-format support, semantic compression, basic PII detection
