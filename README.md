@@ -1,5 +1,11 @@
 # DocsIngest
 
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-green)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![HIPAA](https://img.shields.io/badge/HIPAA-Safe_Harbor-red)]()
+[![NIST 800-171](https://img.shields.io/badge/NIST-800--171-blue)]()
+[![FedRAMP](https://img.shields.io/badge/FedRAMP-Ready-orange)]()
+
 Defense-grade document ingestion with CUI detection, ITAR/EAR export control screening, PII/PHI protection, document sanitization, and FedRAMP-ready audit trails. Turns any document directory into LLM-friendly text while enforcing federal compliance standards.
 
 ## Federal Compliance Coverage
